@@ -1,3 +1,5 @@
+package Plato;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -9,7 +11,6 @@ import java.util.concurrent.Executors;
 public class Server {
 
     public static void main(String args[]) throws IOException {
-        File userDataFile = new File("")
 
         ServerSocket server = new ServerSocket(4000) ;
         ExecutorService executorService = Executors.newFixedThreadPool(2) ;
