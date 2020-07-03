@@ -16,10 +16,29 @@ public class UserHandler implements Runnable {
         while (true){
             try {
                 String command = dis.readUTF() ;
+                switch (command){
+                    case "login" :{
+
+                    }
+                    case "register" : {
+
+                    }
+                    case "search_for_friend" : {
+
+                    }
+                    case "make_room":{
+
+                    }
+                    case "join_room":{
+                        // CountDown
+                        // Controlling Game
+                    }
+                }
 
             } catch (IOException e) {
+
+                // What if user disconnects ? (maybe in the game ) 
                 e.printStackTrace();
-                System.out.println("ff");
             }
 
         }
