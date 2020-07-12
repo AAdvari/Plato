@@ -47,9 +47,21 @@ public class UserHandler implements Runnable {
                         username = dis.readUTF() ;
                         ArrayList<User> compatible  = new ArrayList<>();
                         Set<String> usernames = users.keySet();
-
+                        int count = 0 ;
+                        for(String user : usernames){
+                            if(count == 3)
+                                break;
+                            if( user.contains(username)) {
+                                compatible.add(users.get(user));
+                                count++ ;
+                            }
+                        }
+                        oos.writeObject(compatible);
                     }
                     case "make_room":{
+
+                        Room room = new Room() ;
+
 
                     }
                     case "join_room":{
