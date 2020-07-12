@@ -17,11 +17,6 @@ public class Client   {
             switch (command){
 
 
-
-
-
-
-
             }
 
 

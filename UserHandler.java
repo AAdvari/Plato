@@ -63,7 +63,6 @@ public class UserHandler implements Runnable {
                         oos.writeObject(compatible);
                     }
                     case "make_room":{
-
                         User roomOwner ;
                         roomOwner = (User)ois.readObject() ;
                         Room room = new Room(roomOwner , "Temp1" , 2) ; // roomOwner Will be added automatically to room !
@@ -73,23 +72,21 @@ public class UserHandler implements Runnable {
                         int roomId = dis.readInt() ;
                         Room joiningRoom = rooms.get(roomId) ;
                         User addingUser = (User) ois.readObject();
-                        joiningRoom.addUser(addingUser);
-                        if(joiningRoom.getUsersCount() == joiningRoom.getCapacity())
-                            joiningRoom.start();
+                        if(joiningRoom.getCapacity() == joiningRoom.getCapacity()){
+                            // Game
+                        }
                     }
                     case "get_rooms":{
-
+                        oos.writeObject(rooms);
                     }
                     case "watch":{
+                        int roomId = dis.readInt() ;
+                        Room watchingRoom = rooms.get(roomId) ;
+                    }
+                    case "send_message":{
 
                     }
-                    case "profile_info":{
-                        User requestedUser = (User)ois.readObject() ;
-
-                    }
-
                 }
-
             } catch (IOException | ClassNotFoundException e) {
 
                 // What if user disconnects ? (maybe in the game )

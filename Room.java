@@ -2,7 +2,7 @@ package Plato;
 
 import java.util.ArrayList;
 
-public class Room extends Thread{
+public class Room  {
 
 
     public static int number = 0 ;
@@ -31,8 +31,4 @@ public class Room extends Thread{
         return capacity ;
     }
 
-    @Override
-    public void run() {
-
-    }
 }
