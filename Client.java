@@ -6,13 +6,11 @@ public class Client   {
     public static void main(String args[]){
         Scanner scanner = new Scanner(System.in);
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
 
 
-            }
-        }).start();
+        Thread game = new Thread() ;
+        Thread friendRequest = new Thread() ;
+
         String command  = null   ;
         while (true){
             command = scanner.nextLine() ;

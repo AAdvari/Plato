@@ -60,17 +60,20 @@ public class UserHandler implements Runnable {
                     }
                     case "make_room":{
 
-                        Room room = new Room() ;
-
-
+                        User roomOwner ;
+                        roomOwner = (User)ois.readObject() ;
+                        Room room = new Room(roomOwner) ;
                     }
                     case "join_room":{
+                        int roomId = dis.readInt() ;
+
+
                         // CountDown
                         // Controlling Game
                     }
                 }
 
-            } catch (IOException e) {
+            } catch (IOException | ClassNotFoundException e) {
 
                 // What if user disconnects ? (maybe in the game )
                 e.printStackTrace();
