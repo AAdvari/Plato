@@ -4,14 +4,18 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class UserHandler implements Runnable {
     private final DataInputStream dis ;
     private final DataOutputStream dos ;
     private final ObjectInputStream ois ;
     private final ObjectOutputStream oos ;
+    private ConcurrentHashMap<Integer,Room> rooms ;
     private Map<String , User> users =  UsersList.getUsersList();
-    public UserHandler(Socket socket) throws IOException {
+
+    public UserHandler(Socket socket , ConcurrentHashMap<Integer, Room> rooms) throws IOException {
+        this.rooms = rooms ;
         dis = new DataInputStream(socket.getInputStream()) ;
         dos = new DataOutputStream(socket.getOutputStream()) ;
         ois = new ObjectInputStream(socket.getInputStream()) ;
@@ -62,15 +66,28 @@ public class UserHandler implements Runnable {
 
                         User roomOwner ;
                         roomOwner = (User)ois.readObject() ;
-                        Room room = new Room(roomOwner) ;
+                        Room room = new Room(roomOwner , "Temp1" , 2) ; // roomOwner Will be added automatically to room !
+                        rooms.put(Room.number , room) ;
                     }
                     case "join_room":{
                         int roomId = dis.readInt() ;
-
-
-                        // CountDown
-                        // Controlling Game
+                        Room joiningRoom = rooms.get(roomId) ;
+                        User addingUser = (User) ois.readObject();
+                        joiningRoom.addUser(addingUser);
+                        if(joiningRoom.getUsersCount() == joiningRoom.getCapacity())
+                            joiningRoom.start();
                     }
+                    case "get_rooms":{
+
+                    }
+                    case "watch":{
+
+                    }
+                    case "profile_info":{
+                        User requestedUser = (User)ois.readObject() ;
+
+                    }
+
                 }
 
             } catch (IOException | ClassNotFoundException e) {
