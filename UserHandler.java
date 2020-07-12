@@ -11,7 +11,9 @@ public class UserHandler implements Runnable {
     private final DataOutputStream dos ;
     private final ObjectInputStream ois ;
     private final ObjectOutputStream oos ;
+    private User currentUser = null ; // Will Be Assigned after Login .... !
     private ConcurrentHashMap<Integer,Room> rooms ;
+
     private Map<String , User> users =  UsersList.getUsersList();
 
     public UserHandler(Socket socket , ConcurrentHashMap<Integer, Room> rooms) throws IOException {
@@ -19,12 +21,13 @@ public class UserHandler implements Runnable {
         dis = new DataInputStream(socket.getInputStream()) ;
         dos = new DataOutputStream(socket.getOutputStream()) ;
         ois = new ObjectInputStream(socket.getInputStream()) ;
-        oos =  new ObjectOutputStream(socket.getOutputStream()) ;
+        oos = new ObjectOutputStream(socket.getOutputStream()) ;
     }
     @Override
     public void run() {
         while (true){
             try {
+
                 String command = dis.readUTF() ;
                 switch (command){
                     case "login" :{
@@ -33,12 +36,13 @@ public class UserHandler implements Runnable {
                         username = dis.readUTF() ;
                         password = dis.readUTF() ;
 
-                        if(users.containsKey(username) && users.get(username).getPassword().equals(password))
-                            oos.writeObject(users.get(username));
+                        if(users.containsKey(username) && users.get(username).getPassword().equals(password)) {
+                            User foundUser = users.get(username) ;
+                            oos.writeObject(foundUser);
+                            this.currentUser = foundUser ;
+                        }
                         else
                             oos.writeObject(null);
-
-
                     }
                     case "register" : {
                         String username,password ;
@@ -63,18 +67,17 @@ public class UserHandler implements Runnable {
                         oos.writeObject(compatible);
                     }
                     case "make_room":{
-                        User roomOwner ;
-                        roomOwner = (User)ois.readObject() ;
-                        Room room = new Room(roomOwner , "Temp1" , 2) ; // roomOwner Will be added automatically to room !
+                        Room room = new Room(new UserAndHandler(currentUser , this) , "Temp1" , 2) ; // roomOwner Will be added automatically to room !
                         rooms.put(Room.number , room) ;
+                        room.start();
+                        this.wait();
                     }
                     case "join_room":{
                         int roomId = dis.readInt() ;
                         Room joiningRoom = rooms.get(roomId) ;
-                        User addingUser = (User) ois.readObject();
-                        if(joiningRoom.getCapacity() == joiningRoom.getCapacity()){
-                            // Game
-                        }
+                        joiningRoom.addUser(new UserAndHandler(currentUser , this));
+                        this.wait();
+                        // changing GameRunning boolean is done in addUser method (Room Class)
                     }
                     case "get_rooms":{
                         oos.writeObject(rooms);
@@ -82,18 +85,38 @@ public class UserHandler implements Runnable {
                     case "watch":{
                         int roomId = dis.readInt() ;
                         Room watchingRoom = rooms.get(roomId) ;
+                        this.wait();
                     }
                     case "send_message":{
 
                     }
                 }
-            } catch (IOException | ClassNotFoundException e) {
+            } catch (IOException  e) {
 
                 // What if user disconnects ? (maybe in the game )
+                System.out.println("!");
+                e.printStackTrace();
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
         }
 
+    }
+
+    public DataInputStream getDis() {
+        return dis;
+    }
+
+    public DataOutputStream getDos() {
+        return dos;
+    }
+
+    public ObjectInputStream getOis() {
+        return ois;
+    }
+
+    public ObjectOutputStream getOos() {
+        return oos;
     }
 }
