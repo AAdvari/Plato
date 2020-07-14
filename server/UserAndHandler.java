@@ -8,7 +8,6 @@ public class UserAndHandler {
         this.user = user;
         this.userHandler = userHandler;
     }
-
     public User getUser() {
         return user;
     }

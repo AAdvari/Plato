@@ -29,7 +29,6 @@ public class Server {
         while (true){
             socket = server.accept() ;
             new Thread(new UserHandler(socket,rooms )).start();
-            System.out.println("hhn");
         }
 
     }

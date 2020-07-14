@@ -41,6 +41,13 @@ public class User implements Serializable {
         return password;
     }
 
+    public String getUsername() {
+        return username;
+    }
+
+    public int getGameScore(String game){
+        return gamesList.get(game) ;
+    }
     public Conversation getConversation(User destUser){
         return conversations.get(destUser) ;
     }
