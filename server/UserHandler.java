@@ -17,8 +17,6 @@ public class UserHandler implements Runnable {
 
     public UserHandler(Socket socket, ConcurrentHashMap<Integer, Room> rooms) throws IOException {
         this.rooms = rooms;
-//        dis = new DataInputStream(socket.getInputStream()) ;
-//        dos = new DataOutputStream(socket.getOutputStream()) ;
         oos = new ObjectOutputStream(socket.getOutputStream());
         oos.flush();
         ois = new ObjectInputStream(socket.getInputStream());
@@ -27,7 +25,7 @@ public class UserHandler implements Runnable {
     @Override
     public void run() {
 
-        Thread emptyRoomRemover = new Thread(new Runnable() {
+        Thread emptyRoomRemover = new Thread( new Runnable() {
             @Override
             public void run() {
                 while (true) {
@@ -54,7 +52,7 @@ public class UserHandler implements Runnable {
             try {
 
                 String command = ois.readUTF();
-                System.out.println("command + " + command);
+                System.out.println("command :" + command);
                 switch (command) {
                     case "login": {
                         // These lines may change in order to simultaneous operations in client
