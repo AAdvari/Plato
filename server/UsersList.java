@@ -1,13 +1,11 @@
-package Plato;
+package Plato.server;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class UsersList {
-    private static ConcurrentHashMap<String , User> singleMap = null ;
-    public static Map<Dialog , Conversation> chats  = null ;
-
+    private volatile static ConcurrentHashMap<String , User> singleMap = null ;
     private UsersList(){
 
     }
@@ -25,10 +23,5 @@ public class UsersList {
         }
         return singleMap ;
     }
-    public static Map<Dialog , Conversation> getChatsList(){
-        if(chats == null){
-            // Load From File !
-        }
-        return chats ;
-    }
+
 }

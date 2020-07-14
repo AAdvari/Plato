@@ -1,4 +1,4 @@
-package Plato;
+package Plato.server;
 
 public class UserAndHandler {
     private User user;

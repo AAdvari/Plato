@@ -1,79 +1,134 @@
-package Plato;
+package Plato.server;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.io.*;
 import java.util.ArrayList;
 
 public class Room extends Thread {
 
 
-    public static int number = 0 ;
-    private final int id ;
-    private final int capacity  ;
-    private final String gameName  ;
-    private boolean gameRunning = false ;
-    private ArrayList<UserAndHandler> users = new ArrayList<>() ;
-    private ArrayList<UserAndHandler> watchers = new ArrayList<>();
+    public static int number = 0;
+    private final int id;
+    private final int capacity;
+    private final String name;
+    private final String type; //"casual" or "ranked"
+
+    private boolean gamersReadyForCount = false;
+    private boolean gameStarted = false;
 
 
-    public Room(UserAndHandler user , String gameName , int capacity) {
-        users.add(user) ;
-        id = number ;
-        this.capacity = capacity ;
-        this.gameName = gameName;
-        number++ ;
+    private volatile UserAndHandler user1;
+    private volatile UserAndHandler user2;
+    private volatile ArrayList<UserAndHandler> watchers = new ArrayList<>();
+
+
+    public Room(UserAndHandler user, String type, String name, int capacity) {
+        addUser(user);
+        ;
+        id = number;
+        this.capacity = capacity;
+        this.name = name;
+        this.type = type;
+
+        number++;
     }
 
-    public synchronized void addUser(UserAndHandler user){
-        users.add(user) ;
-        if (getUsersCount() == getCapacity())
-            gameRunning = true;
+    public synchronized void addUser(UserAndHandler user) {
+        if (user1 == null)
+            user1 = user;
+        else if (user2 == null)
+            user2 = user;
+        else
+            return;
+        if( getUsersCount() == capacity)
+            gamersReadyForCount = true ;
+
+        new Thread(new GameProvider(user)).start();
     }
 
-    public int getUsersCount(){
-        return users.size() ;
+    public int getUsersCount() {
+        if (user1 == null && user2 != null)
+            return 1;
+        else if (user2 != null && user1 == null)
+            return 2;
+        else
+            return 0;
     }
 
-    public int getCapacity(){
-        return capacity ;
+    public int getCapacity() {
+        return capacity;
     }
 
-    public synchronized void addWatcher(UserAndHandler watchingUser){
-        watchers.add(watchingUser) ;
+    public synchronized void addWatcher(UserAndHandler watchingUser) {
+        watchers.add(watchingUser);
     }
 
-    public boolean isGameRunning() {
-        return gameRunning;
-    }
 
     @Override
     public void run() {
-        while ( ! isGameRunning() ){
 
+        try {
+            while (true) {
+                while (!gamersReadyForCount) {
+                    Thread.currentThread().sleep(2000);
+                }
+                Thread.currentThread().sleep(1000 * 10);
+                if( getUsersCount() == capacity)
+                    break;
+            }
+            gameStarted = true ;
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
-        UserAndHandler player1 = users.get(0);
-        UserAndHandler player2 = users.get(1);
-
-        DataOutputStream dosPlayer1 = player1.getUserHandler().getDos() ;
-        DataInputStream disPlayer1 = player2.getUserHandler().getDis() ;
-
-        DataOutputStream dosPlayer2 = player1.getUserHandler().getDos() ;
-        DataInputStream disPlayer2 = player2.getUserHandler().getDis() ;
-
-
-
 
     }
 
-    /*
-    * Client should have a Special Thread , only for receiving messages from server ....
-    *  while(true) {
-    *    if ( messageFromServer is your Turn )
-    *          sendSomeThing
-    *    if ( messageFromServer is wait )
-    *           Do Nothing !
-    *    if ( messageFromServer is Loose/Win )
-    *           Show To Users !
-    * }
-    *          */
+    class GameProvider implements Runnable {
+
+        private UserAndHandler userAndHandler;
+        private ObjectOutputStream oos;
+        private ObjectInputStream ois;
+        private User userData;
+
+        public GameProvider(UserAndHandler userAndHandler) {
+            this.userAndHandler = userAndHandler;
+            this.oos = userAndHandler.getUserHandler().getOos();
+            this.ois = userAndHandler.getUserHandler().getOis();
+            this.userData = userAndHandler.getUser();
+        }
+
+        @Override
+        public void run() {
+            try {
+                while (true) {
+                    String command = null;
+                    command = ois.readUTF();
+                    switch (command) {
+
+                        case "quit": {
+                            if (userData.equals(user1))
+                                user1 = null;
+                            else
+                                user2 = null;
+                            userAndHandler.getUserHandler().notify();
+                            break;
+                        }
+                        /// Other Cases is Based On The Game !
+                    }
+
+
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+        }
+
+    }
+    class StreamProvider{
+        // SomeThing Similar to GameProvider !
+
+    }
 }
+
