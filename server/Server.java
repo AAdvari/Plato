@@ -3,10 +3,7 @@ package Plato.server;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -19,6 +16,8 @@ public class Server {
     public static void main(String args[]) throws IOException {
 
         ServerSocket server = new ServerSocket(4000) ;
+        ServerSocket friendRequestServer = new ServerSocket(4001) ;
+
 
 
         /* |  Commented-Code is Tested   |  */
@@ -55,6 +54,31 @@ public class Server {
 //        }) ;
 //        updater.start();
 
+
+        /* This Part Can Be Done In Rooms .... ! */
+//        Thread emptyRoomRemover = new Thread( new Runnable() {
+//            @Override
+//            public void run() {
+//                while (true) {
+//                    try {
+//                        Thread.currentThread().sleep(2000);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                    Enumeration<Integer> roomsKeySet = rooms.keys();
+//                    Iterator iterator = roomsKeySet.asIterator();
+//                    while (iterator.hasNext()) {
+//                        Integer i = (Integer) iterator.next();
+//                        if (rooms.get(i).getUsersCount() == 0)
+//                            rooms.remove(i);
+//                    }
+//
+//                    /// Remove Started Rooms Here ... !
+//
+//                }
+//            }
+//        });
+//        emptyRoomRemover.start();
 
 
         Socket socket = null ;

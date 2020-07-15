@@ -25,29 +25,7 @@ public class UserHandler implements Runnable {
     @Override
     public void run() {
 
-        Thread emptyRoomRemover = new Thread( new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    try {
-                        Thread.currentThread().sleep(2000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    Enumeration<Integer> roomsKeySet = rooms.keys();
-                    Iterator iterator = roomsKeySet.asIterator();
-                    while (iterator.hasNext()) {
-                        Integer i = (Integer) iterator.next();
-                        if (rooms.get(i).getUsersCount() == 0)
-                            rooms.remove(i);
-                    }
 
-                    /// Remove Started Rooms Here ... !
-
-                }
-            }
-        });
-        emptyRoomRemover.start();
         while (true) {
             try {
 
@@ -112,15 +90,17 @@ public class UserHandler implements Runnable {
                         synchronized (oos) {
 
 
+
                         }
 
                     }
                     case "make_room": {
                         Room room = new Room(new UserAndHandler(currentUser, this),
-                                "Temp1", "room1", 2); // roomMaker Will be added automatically to room !
+                                "ranked", "xo", rooms, 2); // roomMaker Will be added automatically to room !
                         rooms.put(Room.number, room);
                         this.wait();
                         room.start();
+                        break;
                     }
                     case "join_room": {
                         int roomId = ois.readInt();
@@ -149,8 +129,9 @@ public class UserHandler implements Runnable {
 
                         User destUser = users.get(destUsername);
                         if (currentUser.getConversation(destUser) == null) {
-                            currentUser.addConversation(destUser);
-                            destUser.addConversation(currentUser);
+                            Conversation conversation = new Conversation() ;
+                            currentUser.addConversation(destUser , conversation);
+                            destUser.addConversation(currentUser , conversation);
                         }
                         Conversation conversation = currentUser.getConversation(destUser);
                         conversation.sendMessage(new TextMessage(new Date(), currentUser, messageContent));
@@ -169,7 +150,6 @@ public class UserHandler implements Runnable {
                         oos.writeObject(usersScores);
                         oos.flush();
                     }
-
                 }
 
             } catch (IOException e) {
