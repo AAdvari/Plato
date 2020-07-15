@@ -11,6 +11,7 @@ public class UserHandler implements Runnable {
     private final ObjectInputStream ois;
     private final ObjectOutputStream oos;
     private User currentUser = null; // Will Be Assigned after Login .... !
+
     private volatile ConcurrentHashMap<Integer, Room> rooms;
 
     private volatile Map<String, User> users = UsersList.getUsersList();
@@ -95,25 +96,38 @@ public class UserHandler implements Runnable {
 
                     }
                     case "make_room": {
-                        Room room = new Room(new UserAndHandler(currentUser, this),
-                                "ranked", "xo", rooms, 2); // roomMaker Will be added automatically to room !
-                        rooms.put(Room.number, room);
-                        this.wait();
+                        String name,type;
+                        int capacity ;
+                        name = ois.readUTF() ;
+                        type = ois.readUTF() ;
+                        capacity = ois.readInt() ;
+
+                        Room room = new Room(type, name, rooms, capacity);
+                        room.addUser(new UserAndHandler(currentUser , this));
+                        rooms.put(room.getRoomId(), room);
                         room.start();
+                        room.join();
+
                         break;
                     }
-                    case "join_room": {
+                    case "join_room":{
                         int roomId = ois.readInt();
                         Room joiningRoom = rooms.get(roomId);
+                        System.out.println(joiningRoom);
                         joiningRoom.addUser(new UserAndHandler(currentUser, this));
-                        this.wait();
+                        System.out.println("User Added !");
+                        joiningRoom.join();
                         break;
                         // changing GameRunning boolean is done in addUser method (Room Class)
                     }
 
-
                     case "get_rooms": {
-                        oos.writeObject(rooms);
+                        ConcurrentHashMap<Integer , RoomInfo> roomsInfo = new ConcurrentHashMap<>( );
+                        for (Room room : rooms.values()){
+                            roomsInfo.put( room.getRoomId() , new RoomInfo(
+                                    room.getRoomName() , room.getRoomType() ,room.getRoomId(), room.getCapacity()) ) ;
+                        }
+                        oos.writeObject(roomsInfo);
                         oos.flush();
                         break;
                     }

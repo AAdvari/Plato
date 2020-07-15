@@ -3,13 +3,14 @@ package Plato.server;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
 
-public class Room extends Thread {
+public class Room extends Thread  {
 
 
-    public static int number = 0;
+    public volatile static int number = 0;
     private final int id;
     private final String name;
     private final String type; //"casual" or "ranked"
@@ -19,29 +20,40 @@ public class Room extends Thread {
     private volatile boolean gameStarted = false;
 
 
-    private volatile ArrayList<UserAndHandler> gamers = new ArrayList<>();
+    private volatile ArrayList<UserAndHandler> gamers ;
     private volatile ConcurrentHashMap<Integer, Room> rooms;
-    private volatile ArrayList<UserAndHandler> watchers = new ArrayList<>();
+    private volatile ArrayList<UserAndHandler> watchers ;
 
 
-    public Room(UserAndHandler user, String type, String name, ConcurrentHashMap<Integer, Room> rooms, int capacity) {
-        addUser(user);
+    public Room( String type, String name, ConcurrentHashMap<Integer, Room> rooms, int capacity) {
 
-        id = number;
         this.capacity = capacity;
         this.name = name;
         this.type = type;
         this.rooms = rooms;
+        gamers = new ArrayList<>();
+        watchers = new ArrayList<>();
 
-        number++;
+        id = number;
+            number++;
+
+    }
+
+    public int getRoomId() {
+        return id;
     }
 
     public synchronized void addUser(UserAndHandler user) {
-        gamers.add(user);
+        System.out.println("salam");
+            gamers.add(user);
+
         if (getUsersCount() == capacity)
             gamersReadyForCount = true;
 
+        System.out.println("S2");
+
         new Thread(new GamersExitHandler(user)).start();
+        System.out.println("This Should be Repeated 2 Times !");
     }
 
     public int getUsersCount() {
@@ -51,9 +63,15 @@ public class Room extends Thread {
     public int getCapacity() {
         return capacity;
     }
+    public String getRoomName(){ return  name;}
+    public String getRoomType(){return  type;}
+
+    private boolean areGamersReadyToCount(){
+        return gamersReadyForCount;
+    }
 
 
-    public synchronized void addWatcher(UserAndHandler watchingUser) {
+    public  void addWatcher(UserAndHandler watchingUser) {
         watchers.add(watchingUser);
     }
 
@@ -63,8 +81,9 @@ public class Room extends Thread {
 
         try {
             while (true) {
-                while (!gamersReadyForCount) {
+                while (!areGamersReadyToCount()) {
                     Thread.currentThread().sleep(2000);
+                    System.out.println(getUsersCount());
                 }
                 Thread.currentThread().sleep(1000 * 10);
                 if (getUsersCount() == capacity)
@@ -73,6 +92,7 @@ public class Room extends Thread {
             gameStarted = true;
 
         } catch (InterruptedException e) {
+            System.out.println("User Checker Thread Stopped !");
             e.printStackTrace();
         }
 
@@ -104,8 +124,11 @@ public class Room extends Thread {
             User looser = null;
 
             while (true) {
+                System.out.println("Game Launched ! ");
                 player1Oos.writeUTF("O" + turn);
-                player2Oos.writeUTF("X" + turn);
+                player1Oos.flush();
+                player2Oos.writeUTF("X" + turn) ;
+                player2Oos.flush();
 
 
                 if (turn == 'O') {
@@ -114,11 +137,15 @@ public class Room extends Thread {
                     int row = Integer.parseInt(String.valueOf(move.charAt(0)));
                     int col = Integer.parseInt(String.valueOf(move.charAt(1)));
 
+
                     table[row][col] = 'O';
+                    printTable(table);
 
                     if (isGameFinished(table) == 'O') {
                         player1Oos.writeUTF("winnerO");
+                        player1Oos.flush();
                         player2Oos.writeUTF("winnerO");
+                        player2Oos.flush();
 
                         winner = player1Data.getUser();
                         looser = player2Data.getUser();
@@ -126,9 +153,11 @@ public class Room extends Thread {
                         break;
                     } else {
                         player1Oos.writeUTF("continue");
+                        player1Oos.flush();
                         player2Oos.writeUTF("continue");
+                        player2Oos.flush();
                     }
-                    turn = 'X';
+
                 }
 
 
@@ -138,10 +167,13 @@ public class Room extends Thread {
                     int col = Integer.parseInt(String.valueOf(move.charAt(1)));
 
                     table[row][col] = 'X';
+                    printTable(table);
 
                     if (isGameFinished(table) == 'X') {
                         player1Oos.writeUTF("winnerX");
+                        player1Oos.flush();
                         player2Oos.writeUTF("winnerX");
+                        player2Oos.flush();
 
                         winner = player2Data.getUser();
                         looser = player1Data.getUser();
@@ -150,11 +182,17 @@ public class Room extends Thread {
                         break;
                     } else {
                         player1Oos.writeUTF("continue");
+                        player1Oos.flush();
                         player2Oos.writeUTF("continue");
+                        player2Oos.flush();
                     }
-                    turn = 'O';
+
 
                 }
+                if(turn =='X')
+                    turn = 'O';
+                else
+                    turn = 'X' ;
             }
             if(type.equals("ranked"))
                 winner.addScoreToGame("xo");
@@ -166,6 +204,7 @@ public class Room extends Thread {
             }
             winner.getConversation(looser).sendMessage(new GameReportMessage
                     (new Date() , "xo" , winner.getUsername() , looser.getUsername()));
+
 
 
         } catch (IOException e) {
@@ -190,6 +229,15 @@ public class Room extends Thread {
          */
 
 
+    }
+
+    private void printTable(char[][] table){
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j <3 ; j++) {
+                System.out.print(table[i][j]);
+            }
+            System.out.println("");
+        }
     }
 
     /*
@@ -265,25 +313,28 @@ public class Room extends Thread {
                 while (!gameStarted) {
                     String command = null;
 
+                    Thread.currentThread().sleep(2000);
+                    System.out.println("Here !");
                     // Checking InputStream ... !
-                    ois.mark(1);
-                    int bytesRead = ois.read(new byte[1]);
-                    ois.reset();
-                    if (bytesRead != -1) {
+
+                    if (ois.available() > 0 ) {
                         command = ois.readUTF();
                     }
 
-                    if (command.equals("quit")) {
-                        gamers.remove(userAndHandler) ;
+                    if ( command != null && command.equals("quit")) {
+                        synchronized (gamers) {
+                            gamers.remove(userAndHandler);
+                        }
 
                         if (getUsersCount() == 0) {
                             rooms.remove(id);
                         }
                         userAndHandler.getUserHandler().notify();
-                        break;
                     }
+                    System.out.println("Here !! ");
+                    break;
                 }
-            } catch (IOException e) {
+            } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
             }
 
