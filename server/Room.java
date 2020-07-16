@@ -44,16 +44,14 @@ public class Room extends Thread {
     }
 
     public synchronized void addUser(UserAndHandler user) {
-        System.out.println("salam");
+
         gamers.add(user);
 
         if (getUsersCount() == capacity)
             gamersReadyForCount = true;
 
-        System.out.println("S2");
-
         new Thread(new GamersExitHandler(user)).start();
-        System.out.println("This Should be Repeated 2 Times !");
+
     }
 
     public int getUsersCount() {
@@ -102,7 +100,7 @@ public class Room extends Thread {
             e.printStackTrace();
         }
 
-        xoGameProvider();
+        guessWordGameProvider();
 
     }
 
@@ -236,7 +234,7 @@ public class Room extends Thread {
 
     }
 
-    private void guessWordGameProvider() {
+    private void guessWordGameProvider()  {
 
         UserAndHandler player1Data = gamers.get(0);
         UserAndHandler player2Data = gamers.get(1);
@@ -245,7 +243,6 @@ public class Room extends Thread {
         ObjectInputStream player1Ois = player1Data.getUserHandler().getOis();
         ObjectInputStream player2Ois = player2Data.getUserHandler().getOis();
 
-        char[] word;
         // Choose => Player1
         // Guess => Player2
         boolean player1Guess = false;
@@ -256,12 +253,12 @@ public class Room extends Thread {
         ObjectOutputStream guessOos = player2Oos;
         ObjectInputStream guessOis = player2Ois;
         // game has 2 Rounds ....
-        for (int i = 0; i < 2; i++) {
+        String chosenWord;
+        int chances;
+        char[] word;
+        try {
+            for (int i = 0; i < 2; i++) {
 
-            String chosenWord;
-            int chances;
-
-            try {
                 chooseOos.writeUTF("word");
                 chooseOos.flush();
                 chosenWord = chooseOis.readUTF();
@@ -273,18 +270,23 @@ public class Room extends Thread {
 
                 guessOos.writeUTF("guess");
                 guessOos.flush();
-                guessOos.writeUTF(chances + "chances");
+                guessOos.writeInt(chances );
+                guessOos.flush();
 
                 while (chances > 0) {
                     char guessedChar = guessOis.readChar();
                     if (chosenWord.contains(String.valueOf(guessedChar))) {
                         int index = chosenWord.indexOf(guessedChar);
                         word[index] = guessedChar;
+                        chosenWord = replace(chosenWord, guessedChar);
+                        System.out.println(chosenWord);
+                        printWord(word);
                     }
-                    guessOos.writeObject(word);
+
+                    guessOos.writeUTF(String.valueOf(word));
                     guessOos.flush();
 
-                    chooseOos.writeObject(word);
+                    chooseOos.writeUTF(String.valueOf(word));
                     chooseOos.flush();
 
                     chances--;
@@ -317,17 +319,68 @@ public class Room extends Thread {
                 chooseOis = player2Ois;
                 chooseOos = player2Oos;
 
-                chosenWord = null ;
-                word = null ;
+                chosenWord = null;
+                word = null;
 
-            } catch (IOException e) {
-                e.printStackTrace();
+
+            }
+            User winner,looser ;
+            if (player1Guess ^ player2Guess) {// ^ == XOR operator
+                if (player1Guess) {
+                    player1Oos.writeUTF("winner");
+                    player1Oos.flush();
+                    player2Oos.writeUTF("looser");
+                    player2Oos.flush();
+
+                    winner = player1Data.getUser();
+                    looser = player2Data.getUser();
+
+                    if (type.equals("ranked")) {
+                        winner.addScoreToGame("guessWord");
+
+                    }
+                } else {
+                    player2Oos.writeUTF("winner");
+                    player2Oos.flush();
+                    player1Oos.writeUTF("looser");
+                    player1Oos.flush();
+
+                    winner = player2Data.getUser();
+                    looser = player1Data.getUser();
+                    if (type.equals("ranked")) {
+                        winner.addScoreToGame("guessWord");
+                    }
+                }
+            } else {
+                player2Oos.writeUTF("draw");
+                player2Oos.flush();
+                player1Oos.writeUTF("draw");
+                player1Oos.flush();
             }
 
+            rooms.remove(getRoomId()) ;
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
 
     }
+
+    private static String replace(String string, char ch) {
+        int index = string.indexOf(ch);
+        return string.substring(0, index) + "*" + string.substring(index + 1, string.length());
+
+    }
+
+
+    private static void printWord(char[] word) {
+        for (int i = 0; i < word.length; i++) {
+            System.out.print(word[i]);
+        }
+        System.out.println("");
+    }
+
 
     private void printTable(char[][] table) {
         for (int i = 0; i < 3; i++) {
@@ -406,10 +459,10 @@ public class Room extends Thread {
 
     class GamersExitHandler implements Runnable {
 
-        private UserAndHandler userAndHandler;
-        private ObjectOutputStream oos;
-        private ObjectInputStream ois;
-        private User userData;
+        private final UserAndHandler userAndHandler;
+        private final ObjectOutputStream oos;
+        private final ObjectInputStream ois;
+        private final User userData;
 
         public GamersExitHandler(UserAndHandler userAndHandler) {
             this.userAndHandler = userAndHandler;

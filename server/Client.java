@@ -125,7 +125,7 @@ public class Client {
                         if ( gamersExitHandler!=null && gamersExitHandler.equals("quit"))
                             break;
                         else {
-                            xoGame(oos, ois);
+                            guessWordGame(oos, ois);
                             break;
                         }
                     }
@@ -218,46 +218,46 @@ public class Client {
 
             String type = ois.readUTF() ;
             if (type.equals("guess")){
-                char[] word ;
-                int chances = Integer.parseInt(String.valueOf(ois.readUTF().charAt(0)));
+                int chances = ois.readInt();
 
                 while (chances > 0){
                     System.out.println("Enter Character :");
-                    char guessedChar = scanner.next().charAt(0) ;
+                    char guessedChar = scanner.nextLine().charAt(0) ;
                     oos.writeChar(guessedChar);
                     oos.flush();
 
-                    word = (char[]) ois.readObject() ;
+                    System.out.println(ois.readUTF());
 
-                    printWord(word);
                     chances-- ;
 
                 }
 
                 String result = ois.readUTF() ;
-                if(result.equals("win")){
-                    System.out.println("Won ! ");
-                }
-                if(result.equals("loose")){
-                    System.out.println("Loose ! ");
-                }
+                System.out.println(result);
             }
 
             if(type.equals("word")){
 
-                char[] word ;
-                String chosenWord= scanner.nextLine();
+                System.out.println("Enter Word :");
+                String chosenWord= scanner.nextLine() ;
+
+                oos.writeUTF(chosenWord);
+                oos.flush();
+
                 int chances = chosenWord.length() ;
 
                 while (chances > 0){
-                    word = (char[]) ois.readObject();
-                    printWord(word);
+                    System.out.println(ois.readUTF());
                     chances--;
                 }
                 String result = ois.readUTF() ;
                 System.out.println(result);
             }
         }
+
+        String finalResult = ois.readUTF() ;
+        System.out.println(finalResult);
+
     }
     public static void printWord(char[] word){
         for (int i = 0; i < word.length; i++) {
