@@ -259,12 +259,7 @@ public class Client {
         System.out.println(finalResult);
 
     }
-    public static void printWord(char[] word){
-        for (int i = 0; i < word.length; i++) {
-            System.out.print(word[i]);
-        }
-        System.out.println("");
-    }
+
 }
 
 

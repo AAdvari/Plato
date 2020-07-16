@@ -88,12 +88,25 @@ public class UserHandler implements Runnable {
                     }
                     case "send_friend_request": {
 
-                        synchronized (oos) {
+                        String destUsername = ois.readUTF() ;
+                        users.get(destUsername).addFriendRequest(currentUser.getUsername());
 
+                        break;
 
+                    }
+                    case "send_friend_request_answer":{
 
+                        String destUser = ois.readUTF() ;
+                        String answer = ois.readUTF() ;
+                        if(answer.equals("accept")){
+                            users.get(destUser).addFriend(currentUser);
+                            currentUser.addFriend(users.get(destUser));
+                            currentUser.removeFriendRequest(destUser);
                         }
-
+                        if(answer.equals("reject")){
+                            currentUser.removeFriendRequest(destUser);
+                        }
+                        break;
                     }
                     case "make_room": {
                         String name,type;
@@ -161,6 +174,7 @@ public class UserHandler implements Runnable {
                         for (User user : users.values()){
                             usersScores.put(user.getUsername() , user.getGameScore(game)) ;
                         }
+
                         oos.writeObject(usersScores);
                         oos.flush();
                     }

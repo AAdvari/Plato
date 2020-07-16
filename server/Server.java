@@ -84,7 +84,7 @@ public class Server {
         Socket socket = null ;
         while (true){
             socket = server.accept() ;
-            new Thread(new UserHandler(socket,rooms )).start();
+            new Thread(new UserHandler(socket,rooms)).start();
         }
     }
 }

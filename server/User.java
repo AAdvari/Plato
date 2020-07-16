@@ -3,23 +3,26 @@ package Plato.server ;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class User implements Serializable {
     private String username;
     private String password ;
     private volatile byte[] profilePic = null ;
-    private volatile Room participatingRoom;
     private volatile ArrayList<User> friends;
     private volatile String bioText ;
-    private volatile HashMap<String , Integer> gamesList ; // Mapping games to their scores !
-    private volatile HashMap<User , Conversation> conversations ;
+    private volatile ConcurrentHashMap<String , Integer> gamesList ; // Mapping games to their scores !
+    private volatile ConcurrentHashMap<User , Conversation> conversations ;
+    private volatile ArrayList<String> friendRequests ;  // String are  usernames (senders)...
 
     public User(String username , String password) {
         this.password = password ;
         this.username = username;
-        this.participatingRoom = null;
         this.friends = new ArrayList<>();
-        this.conversations = new HashMap<>();
+        this.gamesList = new ConcurrentHashMap<>();
+        this.conversations = new ConcurrentHashMap<>();
+        this.friendRequests = new ArrayList<>() ;
     }
     public synchronized void setProfilePic(byte[] profilePic){
         this.profilePic = profilePic ;
@@ -35,6 +38,17 @@ public class User implements Serializable {
 
     public byte[] getProfilePic() {
         return profilePic;
+    }
+
+    public synchronized void addFriendRequest(String username){
+        friendRequests.add(username) ;
+
+    }
+    public synchronized void removeFriendRequest(String username){
+        friendRequests.remove(username) ;
+    }
+    public synchronized void addFriend(User user){
+        friends.add(user );
     }
 
     public String getPassword() {
@@ -62,7 +76,8 @@ public class User implements Serializable {
 
 
     /// Just for Test
-    public HashMap<User, Conversation> getConversations() {
+    public ConcurrentHashMap<User, Conversation>
+    etConversations() {
         return conversations;
     }
 }
