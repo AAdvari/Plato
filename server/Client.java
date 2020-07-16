@@ -147,7 +147,7 @@ public class Client {
                         if ( gamersExitHandler!=null && gamersExitHandler.equals("quit"))
                             break;
                         else {
-                            xoGame(oos, ois);
+                            guessWordGame(oos, ois);
                             break;
                         }
                     }
@@ -209,6 +209,61 @@ public class Client {
                 } else System.out.println(result);
             }
         }
+    }
+
+    public static void guessWordGame(ObjectOutputStream oos, ObjectInputStream ois) throws IOException, ClassNotFoundException {
+        Scanner scanner = new Scanner(System.in)  ;
+
+        for (int i = 0; i < 2 ; i++) {
+
+            String type = ois.readUTF() ;
+            if (type.equals("guess")){
+                char[] word ;
+                int chances = Integer.parseInt(String.valueOf(ois.readUTF().charAt(0)));
+
+                while (chances > 0){
+                    System.out.println("Enter Character :");
+                    char guessedChar = scanner.next().charAt(0) ;
+                    oos.writeChar(guessedChar);
+                    oos.flush();
+
+                    word = (char[]) ois.readObject() ;
+
+                    printWord(word);
+                    chances-- ;
+
+                }
+
+                String result = ois.readUTF() ;
+                if(result.equals("win")){
+                    System.out.println("Won ! ");
+                }
+                if(result.equals("loose")){
+                    System.out.println("Loose ! ");
+                }
+            }
+
+            if(type.equals("word")){
+
+                char[] word ;
+                String chosenWord= scanner.nextLine();
+                int chances = chosenWord.length() ;
+
+                while (chances > 0){
+                    word = (char[]) ois.readObject();
+                    printWord(word);
+                    chances--;
+                }
+                String result = ois.readUTF() ;
+                System.out.println(result);
+            }
+        }
+    }
+    public static void printWord(char[] word){
+        for (int i = 0; i < word.length; i++) {
+            System.out.print(word[i]);
+        }
+        System.out.println("");
     }
 }
 

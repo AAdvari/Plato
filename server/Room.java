@@ -7,7 +7,7 @@ import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
 
-public class Room extends Thread  {
+public class Room extends Thread {
 
 
     public volatile static int number = 0;
@@ -20,12 +20,12 @@ public class Room extends Thread  {
     private volatile boolean gameStarted = false;
 
 
-    private volatile ArrayList<UserAndHandler> gamers ;
+    private volatile ArrayList<UserAndHandler> gamers;
     private volatile ConcurrentHashMap<Integer, Room> rooms;
-    private volatile ArrayList<UserAndHandler> watchers ;
+    private volatile ArrayList<UserAndHandler> watchers;
 
 
-    public Room( String type, String name, ConcurrentHashMap<Integer, Room> rooms, int capacity) {
+    public Room(String type, String name, ConcurrentHashMap<Integer, Room> rooms, int capacity) {
 
         this.capacity = capacity;
         this.name = name;
@@ -35,7 +35,7 @@ public class Room extends Thread  {
         watchers = new ArrayList<>();
 
         id = number;
-            number++;
+        number++;
 
     }
 
@@ -45,7 +45,7 @@ public class Room extends Thread  {
 
     public synchronized void addUser(UserAndHandler user) {
         System.out.println("salam");
-            gamers.add(user);
+        gamers.add(user);
 
         if (getUsersCount() == capacity)
             gamersReadyForCount = true;
@@ -63,15 +63,21 @@ public class Room extends Thread  {
     public int getCapacity() {
         return capacity;
     }
-    public String getRoomName(){ return  name;}
-    public String getRoomType(){return  type;}
 
-    private boolean areGamersReadyToCount(){
+    public String getRoomName() {
+        return name;
+    }
+
+    public String getRoomType() {
+        return type;
+    }
+
+    private boolean areGamersReadyToCount() {
         return gamersReadyForCount;
     }
 
 
-    public  void addWatcher(UserAndHandler watchingUser) {
+    public void addWatcher(UserAndHandler watchingUser) {
         watchers.add(watchingUser);
     }
 
@@ -127,7 +133,7 @@ public class Room extends Thread  {
                 System.out.println("Game Launched ! ");
                 player1Oos.writeUTF("O" + turn);
                 player1Oos.flush();
-                player2Oos.writeUTF("X" + turn) ;
+                player2Oos.writeUTF("X" + turn);
                 player2Oos.flush();
 
 
@@ -189,22 +195,21 @@ public class Room extends Thread  {
 
 
                 }
-                if(turn =='X')
+                if (turn == 'X')
                     turn = 'O';
                 else
-                    turn = 'X' ;
+                    turn = 'X';
             }
-            if(type.equals("ranked"))
+            if (type.equals("ranked"))
                 winner.addScoreToGame("xo");
 
-            if( winner.getConversation(looser) == null){
-                Conversation conversation = new Conversation() ;
-                winner.addConversation(looser , conversation);
-                looser.addConversation(winner , conversation);
+            if (winner.getConversation(looser) == null) {
+                Conversation conversation = new Conversation();
+                winner.addConversation(looser, conversation);
+                looser.addConversation(winner, conversation);
             }
             winner.getConversation(looser).sendMessage(new GameReportMessage
-                    (new Date() , "xo" , winner.getUsername() , looser.getUsername()));
-
+                    (new Date(), "xo", winner.getUsername(), looser.getUsername()));
 
 
         } catch (IOException e) {
@@ -231,9 +236,102 @@ public class Room extends Thread  {
 
     }
 
-    private void printTable(char[][] table){
+    private void guessWordGameProvider() {
+
+        UserAndHandler player1Data = gamers.get(0);
+        UserAndHandler player2Data = gamers.get(1);
+        ObjectOutputStream player1Oos = player1Data.getUserHandler().getOos();
+        ObjectOutputStream player2Oos = player2Data.getUserHandler().getOos();
+        ObjectInputStream player1Ois = player1Data.getUserHandler().getOis();
+        ObjectInputStream player2Ois = player2Data.getUserHandler().getOis();
+
+        char[] word;
+        // Choose => Player1
+        // Guess => Player2
+        boolean player1Guess = false;
+        boolean player2Guess = false;
+
+        ObjectOutputStream chooseOos = player1Oos;
+        ObjectInputStream chooseOis = player1Ois;
+        ObjectOutputStream guessOos = player2Oos;
+        ObjectInputStream guessOis = player2Ois;
+        // game has 2 Rounds ....
+        for (int i = 0; i < 2; i++) {
+
+            String chosenWord;
+            int chances;
+
+            try {
+                chooseOos.writeUTF("word");
+                chooseOos.flush();
+                chosenWord = chooseOis.readUTF();
+                word = new char[chosenWord.length()];
+                for (int j = 0; j < chosenWord.length(); j++)
+                    word[j] = '-';
+
+                chances = word.length;
+
+                guessOos.writeUTF("guess");
+                guessOos.flush();
+                guessOos.writeUTF(chances + "chances");
+
+                while (chances > 0) {
+                    char guessedChar = guessOis.readChar();
+                    if (chosenWord.contains(String.valueOf(guessedChar))) {
+                        int index = chosenWord.indexOf(guessedChar);
+                        word[index] = guessedChar;
+                    }
+                    guessOos.writeObject(word);
+                    guessOos.flush();
+
+                    chooseOos.writeObject(word);
+                    chooseOos.flush();
+
+                    chances--;
+                }
+                boolean win = true;
+                for (int f = 0; f < word.length; f++) {
+                    if (word[f] == '-')
+                        win = false;
+                }
+                String result;
+                if (win) result = "guess:win";
+                else result = "guess:loose";
+
+                guessOos.writeUTF(result);
+                guessOos.flush();
+
+                chooseOos.writeUTF(result);
+                chooseOos.flush();
+
+
+                if (guessOos.equals(player1Oos))
+                    player1Guess = win;
+                else
+                    player2Guess = win;
+
+                // Change Roles ...
+                guessOos = player1Oos;
+                guessOis = player1Ois;
+
+                chooseOis = player2Ois;
+                chooseOos = player2Oos;
+
+                chosenWord = null ;
+                word = null ;
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+
+    }
+
+    private void printTable(char[][] table) {
         for (int i = 0; i < 3; i++) {
-            for (int j = 0; j <3 ; j++) {
+            for (int j = 0; j < 3; j++) {
                 System.out.print(table[i][j]);
             }
             System.out.println("");
@@ -256,11 +354,12 @@ public class Room extends Thread  {
                     O++;
                 }
             }
-            if(X==3)
+            if (X == 3)
                 return 'X';
-            if(O==3)
-                return 'O' ;
-            X = 0 ; O = 0 ;
+            if (O == 3)
+                return 'O';
+            X = 0;
+            O = 0;
         }
         //Rows
         for (int j = 0; j < 3; j++) {
@@ -272,23 +371,35 @@ public class Room extends Thread  {
                     O++;
                 }
             }
-            if(X==3)
+            if (X == 3)
                 return 'X';
-            if(O==3)
-                return 'O' ;
-            X = 0 ; O = 0 ;
+            if (O == 3)
+                return 'O';
+            X = 0;
+            O = 0;
         }
 
-        for (int i = 0 ; i < 3 ; i++){
-            if(table[i][i] == 'X')
+        for (int i = 0; i < 3; i++) {
+            if (table[i][i] == 'X')
                 X++;
-            if(table[i][i] == 'O')
+            if (table[i][i] == 'O')
                 O++;
         }
-        if(X==3) return 'X' ;
-        if(O==3) return 'O' ;
+        if (X == 3) return 'X';
+        if (O == 3) return 'O';
 
-        return 'C' ;
+        X = O = 0;
+
+        for (int i = 0; i < 3; i++) {
+            if (table[i][2 - i] == 'X')
+                X++;
+            if (table[i][2 - i] == 'O')
+                O++;
+        }
+        if (X == 3) return 'X';
+        if (O == 3) return 'O';
+
+        return 'C';
 
     }
 
@@ -317,11 +428,11 @@ public class Room extends Thread  {
                     System.out.println("Here !");
                     // Checking InputStream ... !
 
-                    if (ois.available() > 0 ) {
+                    if (ois.available() > 0) {
                         command = ois.readUTF();
                     }
 
-                    if ( command != null && command.equals("quit")) {
+                    if (command != null && command.equals("quit")) {
                         synchronized (gamers) {
                             gamers.remove(userAndHandler);
                         }
