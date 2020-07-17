@@ -20,7 +20,13 @@ public class User implements Serializable {
         this.password = password ;
         this.username = username;
         this.friends = new ArrayList<>();
+
+
         this.gamesList = new ConcurrentHashMap<>();
+        gamesList.put("xo" , 0);
+        gamesList.put("guessWord" , 0) ;
+
+
         this.conversations = new ConcurrentHashMap<>();
         this.friendRequests = new ArrayList<>() ;
     }
@@ -59,9 +65,15 @@ public class User implements Serializable {
         return username;
     }
 
-    public synchronized void addScoreToGame(String game){
+    public synchronized void addWinScoreToGame(String game){
+
         gamesList.put(game , gamesList.get(game) + 100 ) ;
     }
+    public synchronized void addDrawScoreToGame(String game){
+
+        gamesList.put(game , gamesList.get(game) + 20 ) ;
+    }
+
 
     public int getGameScore(String game){
         return gamesList.get(game) ;

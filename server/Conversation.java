@@ -1,8 +1,9 @@
 package Plato.server;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Conversation {
+public class Conversation implements Serializable {
     // Recall That The Order Of Messages maintains in ArrayList !
     private volatile ArrayList<Message> messages ;
 

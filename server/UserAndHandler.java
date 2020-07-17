@@ -1,6 +1,8 @@
 package Plato.server;
 
-public class UserAndHandler {
+import java.io.Serializable;
+
+public class UserAndHandler implements Serializable {
     private User user;
     private UserHandler userHandler ;
 
