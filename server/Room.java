@@ -100,7 +100,16 @@ public class Room extends Thread {
             e.printStackTrace();
         }
 
-        guessWordGameProvider();
+        switch (name){
+            case "xo":{
+                xoGameProvider();
+                break;
+            }
+            case "guessWord":{
+                guessWordGameProvider();
+                break;
+            }
+        }
 
     }
 
@@ -135,6 +144,7 @@ public class Room extends Thread {
                 player2Oos.flush();
 
 
+
                 if (turn == 'O') {
                     String move = player1Ois.readUTF();
                     // ADD move To Table
@@ -145,7 +155,8 @@ public class Room extends Thread {
                     table[row][col] = 'O';
                     printTable(table);
 
-                    if (isGameFinished(table) == 'O') {
+                    char result  = isGameFinished(table); //C == Continue  / D == Draw // O,X == Win
+                    if ( result == 'O') {
                         player1Oos.writeUTF("winnerO");
                         player1Oos.flush();
                         player2Oos.writeUTF("winnerO");
@@ -155,11 +166,21 @@ public class Room extends Thread {
                         looser = player2Data.getUser();
 
                         break;
-                    } else {
+                    } else if (result == 'C'){
+
                         player1Oos.writeUTF("continue");
                         player1Oos.flush();
                         player2Oos.writeUTF("continue");
                         player2Oos.flush();
+                    }
+                    else {
+                        player1Oos.writeUTF("draw");
+                        player1Oos.flush();
+                        player2Oos.writeUTF("draw");
+                        player2Oos.flush();
+                        winner = player2Data.getUser();
+                        looser = player1Data.getUser();
+                        break;
                     }
 
                 }
@@ -172,7 +193,7 @@ public class Room extends Thread {
 
                     table[row][col] = 'X';
                     printTable(table);
-
+                    char result = isGameFinished(table) ;
                     if (isGameFinished(table) == 'X') {
                         player1Oos.writeUTF("winnerX");
                         player1Oos.flush();
@@ -184,22 +205,38 @@ public class Room extends Thread {
 
 
                         break;
-                    } else {
+                    } else if(result == 'C') {
                         player1Oos.writeUTF("continue");
                         player1Oos.flush();
                         player2Oos.writeUTF("continue");
                         player2Oos.flush();
                     }
+                    else {
+                        player1Oos.writeUTF("draw");
+                        player1Oos.flush();
+                        player2Oos.writeUTF("draw");
+                        player2Oos.flush();
+                        winner = player2Data.getUser();
+                        looser = player1Data.getUser();
+                        break;
+                    }
 
 
                 }
+
                 if (turn == 'X')
                     turn = 'O';
                 else
                     turn = 'X';
             }
-            if (type.equals("ranked"))
-                winner.addScoreToGame("xo");
+
+
+            if (type.equals("ranked") && isGameFinished(table) != 'D')
+                winner.addWinScoreToGame("xo");
+            if (type.equals("ranked") && isGameFinished(table) == 'D'){
+                winner.addDrawScoreToGame("xo");
+                looser.addDrawScoreToGame("xo");
+            }
 
             if (winner.getConversation(looser) == null) {
                 Conversation conversation = new Conversation();
@@ -207,9 +244,10 @@ public class Room extends Thread {
                 looser.addConversation(winner, conversation);
             }
             winner.getConversation(looser).sendMessage(new GameReportMessage
-                    (new Date(), "xo", winner.getUsername(), looser.getUsername()));
+                    (new Date(), "xo", winner.getUsername(), looser.getUsername() ,
+                            isGameFinished(table)=='D'));
 
-
+            rooms.remove(id) ;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -336,7 +374,7 @@ public class Room extends Thread {
                     looser = player2Data.getUser();
 
                     if (type.equals("ranked")) {
-                        winner.addScoreToGame("guessWord");
+                        winner.addWinScoreToGame("guessWord");
 
                     }
                 } else {
@@ -348,7 +386,7 @@ public class Room extends Thread {
                     winner = player2Data.getUser();
                     looser = player1Data.getUser();
                     if (type.equals("ranked")) {
-                        winner.addScoreToGame("guessWord");
+                        winner.addWinScoreToGame("guessWord");
                     }
                 }
             } else {
@@ -356,6 +394,11 @@ public class Room extends Thread {
                 player2Oos.flush();
                 player1Oos.writeUTF("draw");
                 player1Oos.flush();
+                if(type.equals("ranked")){
+                    player1Data.getUser().addDrawScoreToGame("guessWord");
+                    player2Data.getUser().addDrawScoreToGame("guessWord");
+                }
+
             }
 
             rooms.remove(getRoomId()) ;
@@ -373,7 +416,6 @@ public class Room extends Thread {
 
     }
 
-
     private static void printWord(char[] word) {
         for (int i = 0; i < word.length; i++) {
             System.out.print(word[i]);
@@ -381,11 +423,13 @@ public class Room extends Thread {
         System.out.println("");
     }
 
-
     private void printTable(char[][] table) {
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
+                if(table[i][j] == 'O' || table[i][j] == 'X')
                 System.out.print(table[i][j]);
+                else
+                    System.out.print(" ");
             }
             System.out.println("");
         }
@@ -452,7 +496,15 @@ public class Room extends Thread {
         if (X == 3) return 'X';
         if (O == 3) return 'O';
 
-        return 'C';
+        boolean draw = false ;
+        for (int i = 0; i < 3 ; i++) {
+            for (int j = 0; j <3 ; j++) {
+                if( ! (table[i][j]=='O' || table[i][j]=='X') )
+                    return 'C' ;
+            }
+
+        }
+        return 'D' ;
 
     }
 

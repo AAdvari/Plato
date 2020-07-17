@@ -170,13 +170,13 @@ public class UserHandler implements Runnable {
                     }
                     case "leader_board":{
                         String game = ois.readUTF() ;
-                        TreeMap<String , Integer> usersScores = new TreeMap<>() ;
+                        ArrayList<UserScoreInfo> usersScores = new ArrayList<>() ;
                         for (User user : users.values()){
-                            usersScores.put(user.getUsername() , user.getGameScore(game)) ;
+                            usersScores.add(new UserScoreInfo(user.getUsername() , user.getGameScore(game))) ;
                         }
-
+                        usersScores.sort((o1, o2) -> o1.getScore().compareTo(o2.getScore()));
                         oos.writeObject(usersScores);
-                        oos.flush();
+                        oos.flush() ;
                     }
                 }
 

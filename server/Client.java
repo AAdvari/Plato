@@ -125,7 +125,7 @@ public class Client {
                         if ( gamersExitHandler!=null && gamersExitHandler.equals("quit"))
                             break;
                         else {
-                            guessWordGame(oos, ois);
+                            xoGame(oos, ois);
                             break;
                         }
                     }
@@ -147,7 +147,7 @@ public class Client {
                         if ( gamersExitHandler!=null && gamersExitHandler.equals("quit"))
                             break;
                         else {
-                            guessWordGame(oos, ois);
+                            xoGame(oos , ois);
                             break;
                         }
                     }
@@ -193,9 +193,8 @@ public class Client {
                 oos.flush();
 
                 String result = ois.readUTF();
-                if (result.startsWith("winner")) {
+                if (result.startsWith("winner") || result.startsWith("draw")) {
                     System.out.println(result);
-
                     break;
                 } else System.out.println(result);
 
@@ -203,7 +202,7 @@ public class Client {
             }
             if (type != turn) {
                 String result = ois.readUTF();
-                if (result.startsWith("winner")) {
+                if (result.startsWith("winner") || result.startsWith("draw")) {
                     System.out.println(result);
                     break;
                 } else System.out.println(result);

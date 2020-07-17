@@ -1,7 +1,8 @@
 package Plato.server;
+import java.io.Serializable;
 import java.util.Date;
 
-public class TextMessage extends Message {
+public class TextMessage extends Message implements Serializable {
     private User sender ;
     private String content ;
 
