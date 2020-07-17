@@ -1,15 +1,23 @@
-package Plato;
+package Plato.server;
 
 import java.util.Date;
 
 public class Message {
     private Date date;
-    private User sender ;
-    private String content ;
 
-    public Message(Date date, User sender, String content) {
+
+    public Message(Date date) {
         this.date = date;
-        this.sender = sender;
-        this.content = content;
+
+    }
+
+    // test
+
+
+    @Override
+    public String toString() {
+        return "Message{" +
+                "date=" + date +
+                '}';
     }
 }

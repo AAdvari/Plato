@@ -1,29 +1,30 @@
-package Plato ;
+package Plato.server ;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class User implements Serializable {
     private String username;
     private String password ;
-    private byte[] profilePic = null ;
-    private long scores;
-    private Room participatingRoom;
-    private ArrayList<User> friends;
-    private String bioText ;
-    private HashMap<String , Integer> gamesList ;
-    private ArrayList<Conversation> conversations ;
+    private volatile byte[] profilePic = null ;
+    private volatile ArrayList<User> friends;
+    private volatile String bioText ;
+    private volatile ConcurrentHashMap<String , Integer> gamesList ; // Mapping games to their scores !
+    private volatile ConcurrentHashMap<User , Conversation> conversations ;
+    private volatile ArrayList<String> friendRequests ;  // String are  usernames (senders)...
 
     public User(String username , String password) {
         this.password = password ;
         this.username = username;
-        this.scores = 0 ;
-        this.participatingRoom = null;
         this.friends = new ArrayList<>();
-        this.conversations = new ArrayList<>();
+        this.gamesList = new ConcurrentHashMap<>();
+        this.conversations = new ConcurrentHashMap<>();
+        this.friendRequests = new ArrayList<>() ;
     }
-    public void setProfilePic(byte[] profilePic){
+    public synchronized void setProfilePic(byte[] profilePic){
         this.profilePic = profilePic ;
     }
 
@@ -31,7 +32,7 @@ public class User implements Serializable {
         return bioText;
     }
 
-    public void setBioText(String bioText) {
+    public synchronized void setBioText(String bioText) {
         this.bioText = bioText;
     }
 
@@ -39,7 +40,44 @@ public class User implements Serializable {
         return profilePic;
     }
 
+    public synchronized void addFriendRequest(String username){
+        friendRequests.add(username) ;
+
+    }
+    public synchronized void removeFriendRequest(String username){
+        friendRequests.remove(username) ;
+    }
+    public synchronized void addFriend(User user){
+        friends.add(user );
+    }
+
     public String getPassword() {
         return password;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public synchronized void addScoreToGame(String game){
+        gamesList.put(game , gamesList.get(game) + 100 ) ;
+    }
+
+    public int getGameScore(String game){
+        return gamesList.get(game) ;
+    }
+    public Conversation getConversation(User destUser){
+        return conversations.get(destUser) ;
+    }
+    public synchronized void addConversation(User destUser , Conversation conversation){
+        conversations.put(destUser , conversation) ;
+    }
+
+
+
+    /// Just for Test
+    public ConcurrentHashMap<User, Conversation>
+    etConversations() {
+        return conversations;
     }
 }

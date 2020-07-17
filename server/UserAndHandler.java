@@ -1,4 +1,4 @@
-package Plato;
+package Plato.server;
 
 public class UserAndHandler {
     private User user;
@@ -8,7 +8,6 @@ public class UserAndHandler {
         this.user = user;
         this.userHandler = userHandler;
     }
-
     public User getUser() {
         return user;
     }

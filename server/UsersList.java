@@ -1,13 +1,12 @@
-package Plato;
+package Plato.server;
 
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class UsersList {
-    private static ConcurrentHashMap<String , User> singleMap = null ;
-    public static Map<Dialog , Conversation> chats  = null ;
-
+    private volatile static ConcurrentHashMap<String , User> singleMap = null ;
     private UsersList(){
 
     }
@@ -16,6 +15,20 @@ public class UsersList {
         // some default users made due to testing purposes ...
         if(singleMap==null) {
             // Load From File
+
+//            File file = new File(Server.DATABASE_DIRECTORY) ;
+//            try {
+//                ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file)) ;
+//                singleMap = (ConcurrentHashMap<String , User>) ois.readObject() ;
+//                ois.close();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            } catch (ClassNotFoundException e) {
+//                e.printStackTrace();
+//            }
+
+
+            //Just For Test
             singleMap = new ConcurrentHashMap<String, User>();
             singleMap.put("amir" , new User("amir" , "1234")) ;
             singleMap.put("reza" , new User("reza" , "1234")) ;
@@ -25,10 +38,5 @@ public class UsersList {
         }
         return singleMap ;
     }
-    public static Map<Dialog , Conversation> getChatsList(){
-        if(chats == null){
-            // Load From File !
-        }
-        return chats ;
-    }
+
 }
