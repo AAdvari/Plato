@@ -2,10 +2,7 @@ package Plato.server;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Client {
@@ -122,10 +119,10 @@ public class Client {
 
 //                        oos.writeUTF(gamersExitHandler);
 //                        oos.flush();
-                        if ( gamersExitHandler!=null && gamersExitHandler.equals("quit"))
+                        if (gamersExitHandler != null && gamersExitHandler.equals("quit"))
                             break;
                         else {
-                            xoGame(oos, ois);
+                            dotsGame(oos, ois);
                             break;
                         }
                     }
@@ -144,17 +141,15 @@ public class Client {
 
 //                        oos.writeUTF(gamersExitHandler);
 //                        oos.flush();
-                        if ( gamersExitHandler!=null && gamersExitHandler.equals("quit"))
+                        if (gamersExitHandler != null && gamersExitHandler.equals("quit"))
                             break;
                         else {
-                            xoGame(oos , ois);
+                            dotsGame(oos, ois);
                             break;
                         }
                     }
                     break;
                 }
-
-
                 case "get_rooms": {
                     ConcurrentHashMap<Integer, RoomInfo> rooms = (ConcurrentHashMap<Integer, RoomInfo>) ois.readObject();
                     System.out.println(rooms);
@@ -174,11 +169,11 @@ public class Client {
         Scanner scanner = new Scanner(System.in);
         char type;
         char turn;
-        boolean showType = false ;
+        boolean showType = false;
         while (true) {
             String typeAndTurn = ois.readUTF();
             type = typeAndTurn.charAt(0);
-            if(  ! showType ) {
+            if (!showType) {
                 System.out.println("YourType : " + type);
                 showType = true;
             }
@@ -211,53 +206,121 @@ public class Client {
     }
 
     public static void guessWordGame(ObjectOutputStream oos, ObjectInputStream ois) throws IOException, ClassNotFoundException {
-        Scanner scanner = new Scanner(System.in)  ;
+        Scanner scanner = new Scanner(System.in);
 
-        for (int i = 0; i < 2 ; i++) {
+        for (int i = 0; i < 2; i++) {
 
-            String type = ois.readUTF() ;
-            if (type.equals("guess")){
+            String type = ois.readUTF();
+            if (type.equals("guess")) {
                 int chances = ois.readInt();
 
-                while (chances > 0){
+                while (chances > 0) {
                     System.out.println("Enter Character :");
-                    char guessedChar = scanner.nextLine().charAt(0) ;
+                    char guessedChar = scanner.nextLine().charAt(0);
                     oos.writeChar(guessedChar);
                     oos.flush();
 
                     System.out.println(ois.readUTF());
 
-                    chances-- ;
+                    chances--;
 
                 }
 
-                String result = ois.readUTF() ;
+                String result = ois.readUTF();
                 System.out.println(result);
             }
 
-            if(type.equals("word")){
+            if (type.equals("word")) {
 
                 System.out.println("Enter Word :");
-                String chosenWord= scanner.nextLine() ;
+                String chosenWord = scanner.nextLine();
 
                 oos.writeUTF(chosenWord);
                 oos.flush();
 
-                int chances = chosenWord.length() ;
+                int chances = chosenWord.length();
 
-                while (chances > 0){
+                while (chances > 0) {
                     System.out.println(ois.readUTF());
                     chances--;
                 }
-                String result = ois.readUTF() ;
+                String result = ois.readUTF();
                 System.out.println(result);
             }
         }
 
-        String finalResult = ois.readUTF() ;
+        String finalResult = ois.readUTF();
         System.out.println(finalResult);
 
     }
+
+    public static void dotsGame(ObjectOutputStream oos, ObjectInputStream ois) {
+
+        Scanner scanner = new Scanner(System.in);
+        Box[][] boxes;
+        try {
+            while (true) {
+                String whatToDo = ois.readUTF();
+
+                if (whatToDo.equals("continue")) {
+
+                    String moveOrWait = ois.readUTF();
+                    if (moveOrWait.equals("turn")) {
+
+                        int x1, y1, x2, y2;
+                        System.out.println("Enter Coordinates : ");
+                        x1 = scanner.nextInt();
+                        y1 = scanner.nextInt();
+                        x2 = scanner.nextInt();
+                        y2 = scanner.nextInt();
+
+                        scanner.nextLine();
+                        String sendingCoordinates = String.valueOf(x1) + y1 + x2 + y2;
+                        oos.writeUTF(sendingCoordinates);
+                        oos.flush();
+
+                    }
+                    if(moveOrWait.equals("wait")){
+                        System.out.println("Wait For Others to Move ! ");
+                    }
+
+                        boxes = (Box[][]) ois.readObject();
+
+                        HashMap<String, Integer> usersScores = (HashMap<String, Integer>) ois.readObject();
+
+
+                        print(boxes);
+                        System.out.println(usersScores);
+
+
+                }
+                if (whatToDo.equals("finish")) {
+                    break;
+                }
+
+            }
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
+    public static void print(Box[][] boxes) {
+        for (Box[] boxArray :
+                boxes) {
+            for (Box box :
+                    boxArray) {
+
+                System.out.print(box + " ");
+
+            }
+            System.out.println();
+
+        }
+
+    }
+
 
 }
 

@@ -34,7 +34,7 @@ public class UserHandler implements Runnable {
                 System.out.println("command :" + command);
                 switch (command) {
                     case "login": {
-                        // These lines may change in order to simultaneous operations in client
+                        // These lines may change in order to simultaneous operations in client(Change it :) )
                         String username, password;
                         username = ois.readUTF();
                         password = ois.readUTF();
@@ -57,11 +57,11 @@ public class UserHandler implements Runnable {
                         if (!users.containsKey(username)) {
                             users.put(username, new User(username, password));
                             oos.writeUTF("successful");
-
                         } else {
                             oos.writeUTF("failed");
                         }
                         oos.flush();
+
 
                         /*  Just For Test */
                         System.out.println(users);
@@ -147,7 +147,9 @@ public class UserHandler implements Runnable {
                     case "watch": {
                         int roomId = ois.readInt();
                         Room watchingRoom = rooms.get(roomId);
-                        this.wait();
+                        synchronized (this){
+                            this.wait();
+                        };
                         break;
                     }
                     case "send_message": {

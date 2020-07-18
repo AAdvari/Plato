@@ -25,6 +25,7 @@ public class User implements Serializable {
         this.gamesList = new ConcurrentHashMap<>();
         gamesList.put("xo" , 0);
         gamesList.put("guessWord" , 0) ;
+        gamesList.put("dotsGame" , 0) ;
 
 
         this.conversations = new ConcurrentHashMap<>();
@@ -73,6 +74,9 @@ public class User implements Serializable {
 
         gamesList.put(game , gamesList.get(game) + 20 ) ;
     }
+    public synchronized void addScoreToGame(int bonus , String game){
+        gamesList.put(game , gamesList.get(game) + bonus ) ;
+    }
 
 
     public int getGameScore(String game){
@@ -89,7 +93,7 @@ public class User implements Serializable {
 
     /// Just for Test
     public ConcurrentHashMap<User, Conversation>
-    etConversations() {
+    getConversations() {
         return conversations;
     }
 }

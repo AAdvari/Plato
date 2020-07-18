@@ -16,8 +16,6 @@ public class Server {
     public static void main(String args[]) throws IOException {
 
         ServerSocket server = new ServerSocket(4000) ;
-        ServerSocket friendRequestServer = new ServerSocket(4001) ;
-
 
 
         /* |  Commented-Code is Tested   |  */
