@@ -1,9 +1,8 @@
 package Plato.server;
 
+
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -77,6 +76,8 @@ public class Room extends Thread {
 
     public void addWatcher(UserAndHandler watchingUser) {
         watchers.add(watchingUser);
+        new Thread(new StreamHandler(watchingUser)).start();
+
     }
 
 
@@ -100,16 +101,17 @@ public class Room extends Thread {
             e.printStackTrace();
         }
 
-        switch (name){
-            case "xo":{
+        switch (name) {
+            case "xo": {
                 xoGameProvider();
                 break;
             }
-            case "guessWord":{
+            case "guessWord": {
                 guessWordGameProvider();
                 break;
             }
         }
+        gameStarted = false;
 
     }
 
@@ -136,6 +138,8 @@ public class Room extends Thread {
             User winner = null;
             User looser = null;
 
+            boolean RolesSentToWatchers = false;
+
             while (true) {
                 System.out.println("Game Launched ! ");
                 player1Oos.writeUTF("O" + turn);
@@ -143,6 +147,18 @@ public class Room extends Thread {
                 player2Oos.writeUTF("X" + turn);
                 player2Oos.flush();
 
+
+                if (!RolesSentToWatchers) {
+                    String player1Username = player1Data.getUser().getUsername();
+                    String player2Username = player2Data.getUser().getUsername();
+                    for (UserAndHandler userAndHandler : watchers) {
+                        ObjectOutputStream oos = userAndHandler.getUserHandler().getOos();
+                        oos.writeUTF(player1Username + " " + "O");
+                        oos.flush();
+                        oos.writeUTF(player2Username + " " + "X");
+                    }
+                    RolesSentToWatchers = true;
+                }
 
 
                 if (turn == 'O') {
@@ -155,8 +171,8 @@ public class Room extends Thread {
                     table[row][col] = 'O';
                     printTable(table);
 
-                    char result  = isGameFinished(table); //C == Continue  / D == Draw // O,X == Win
-                    if ( result == 'O') {
+                    char result = isGameFinished(table); //C == Continue  / D == Draw // O,X == Win
+                    if (result == 'O') {
                         player1Oos.writeUTF("winnerO");
                         player1Oos.flush();
                         player2Oos.writeUTF("winnerO");
@@ -166,14 +182,13 @@ public class Room extends Thread {
                         looser = player2Data.getUser();
 
                         break;
-                    } else if (result == 'C'){
+                    } else if (result == 'C') {
 
                         player1Oos.writeUTF("continue");
                         player1Oos.flush();
                         player2Oos.writeUTF("continue");
                         player2Oos.flush();
-                    }
-                    else {
+                    } else {
                         player1Oos.writeUTF("draw");
                         player1Oos.flush();
                         player2Oos.writeUTF("draw");
@@ -193,7 +208,10 @@ public class Room extends Thread {
 
                     table[row][col] = 'X';
                     printTable(table);
-                    char result = isGameFinished(table) ;
+
+                    sendXOTableToWatchers(table);
+
+                    char result = isGameFinished(table);
                     if (isGameFinished(table) == 'X') {
                         player1Oos.writeUTF("winnerX");
                         player1Oos.flush();
@@ -205,13 +223,12 @@ public class Room extends Thread {
 
 
                         break;
-                    } else if(result == 'C') {
+                    } else if (result == 'C') {
                         player1Oos.writeUTF("continue");
                         player1Oos.flush();
                         player2Oos.writeUTF("continue");
                         player2Oos.flush();
-                    }
-                    else {
+                    } else {
                         player1Oos.writeUTF("draw");
                         player1Oos.flush();
                         player2Oos.writeUTF("draw");
@@ -233,7 +250,7 @@ public class Room extends Thread {
 
             if (type.equals("ranked") && isGameFinished(table) != 'D')
                 winner.addWinScoreToGame("xo");
-            if (type.equals("ranked") && isGameFinished(table) == 'D'){
+            if (type.equals("ranked") && isGameFinished(table) == 'D') {
                 winner.addDrawScoreToGame("xo");
                 looser.addDrawScoreToGame("xo");
             }
@@ -244,35 +261,18 @@ public class Room extends Thread {
                 looser.addConversation(winner, conversation);
             }
             winner.getConversation(looser).sendMessage(new GameReportMessage
-                    (new Date(), "xo", winner.getUsername(), looser.getUsername() ,
-                            isGameFinished(table)=='D'));
+                    (new Date(), "xo", winner.getUsername(), looser.getUsername(),
+                            isGameFinished(table) == 'D'));
 
-            rooms.remove(id) ;
+//            rooms.remove(id);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        /*
-        Client Should Do ST like This ... :
-        while(true){
-        getTurn();
-        if ( Turn is O ) {
-               writeAnswer() == > Update Table
-               getResponse()
-        }
-
-        else{
-                getResponse()
-             }
-
-          }
-
-         */
-
-
     }
 
-    private void guessWordGameProvider()  {
+
+    private void guessWordGameProvider() {
 
         UserAndHandler player1Data = gamers.get(0);
         UserAndHandler player2Data = gamers.get(1);
@@ -308,7 +308,7 @@ public class Room extends Thread {
 
                 guessOos.writeUTF("guess");
                 guessOos.flush();
-                guessOos.writeInt(chances );
+                guessOos.writeInt(chances);
                 guessOos.flush();
 
                 while (chances > 0) {
@@ -362,7 +362,7 @@ public class Room extends Thread {
 
 
             }
-            User winner,looser ;
+            User winner, looser;
             if (player1Guess ^ player2Guess) {// ^ == XOR operator
                 if (player1Guess) {
                     player1Oos.writeUTF("winner");
@@ -394,14 +394,12 @@ public class Room extends Thread {
                 player2Oos.flush();
                 player1Oos.writeUTF("draw");
                 player1Oos.flush();
-                if(type.equals("ranked")){
+                if (type.equals("ranked")) {
                     player1Data.getUser().addDrawScoreToGame("guessWord");
                     player2Data.getUser().addDrawScoreToGame("guessWord");
                 }
 
             }
-
-            rooms.remove(getRoomId()) ;
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -410,12 +408,18 @@ public class Room extends Thread {
 
     }
 
-    private static String replace(String string, char ch) {
+    /*
+    guessWordGame utility method
+     */
+    private String replace(String string, char ch) {
         int index = string.indexOf(ch);
         return string.substring(0, index) + "*" + string.substring(index + 1, string.length());
 
     }
 
+    /*
+    just For Testing Server (guessWord)
+     */
     private static void printWord(char[] word) {
         for (int i = 0; i < word.length; i++) {
             System.out.print(word[i]);
@@ -423,11 +427,25 @@ public class Room extends Thread {
         System.out.println("");
     }
 
+    private void sendXOTableToWatchers(char[][] table) {
+
+        for (UserAndHandler userAndHandler : watchers) {
+            try {
+                userAndHandler.getUserHandler().getOos().writeObject(table);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /*
+    just for Testing Server (xo)
+     */
     private void printTable(char[][] table) {
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                if(table[i][j] == 'O' || table[i][j] == 'X')
-                System.out.print(table[i][j]);
+                if (table[i][j] == 'O' || table[i][j] == 'X')
+                    System.out.print(table[i][j]);
                 else
                     System.out.print(" ");
             }
@@ -436,7 +454,7 @@ public class Room extends Thread {
     }
 
     /*
-    OutPut is The Winner Character !
+    OutPut is The Winner Character(xo) !
      */
     private char isGameFinished(char[][] table) {
         int X = 0;
@@ -496,15 +514,15 @@ public class Room extends Thread {
         if (X == 3) return 'X';
         if (O == 3) return 'O';
 
-        boolean draw = false ;
-        for (int i = 0; i < 3 ; i++) {
-            for (int j = 0; j <3 ; j++) {
-                if( ! (table[i][j]=='O' || table[i][j]=='X') )
-                    return 'C' ;
+        boolean draw = false;
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (!(table[i][j] == 'O' || table[i][j] == 'X'))
+                    return 'C';
             }
 
         }
-        return 'D' ;
+        return 'D';
 
     }
 
@@ -530,9 +548,7 @@ public class Room extends Thread {
                     String command = null;
 
                     Thread.currentThread().sleep(2000);
-                    System.out.println("Here !");
                     // Checking InputStream ... !
-
                     if (ois.available() > 0) {
                         command = ois.readUTF();
                     }
@@ -547,7 +563,6 @@ public class Room extends Thread {
                         }
                         userAndHandler.getUserHandler().notify();
                     }
-                    System.out.println("Here !! ");
                     break;
                 }
             } catch (IOException | InterruptedException e) {
@@ -559,5 +574,359 @@ public class Room extends Thread {
 
     }
 
+    class StreamHandler implements Runnable {
+        private final UserAndHandler userAndHandler;
+        private final ObjectOutputStream oos;
+        private final ObjectInputStream ois;
+        private final User userData;
+
+        public StreamHandler(UserAndHandler userAndHandler) {
+            this.userAndHandler = userAndHandler;
+            userData = userAndHandler.getUser();
+            oos = userAndHandler.getUserHandler().getOos();
+            ois = userAndHandler.getUserHandler().getOis();
+        }
+
+
+        @Override
+        public void run() {
+            try {
+                while (gameStarted) {
+                    String command = null;
+
+                    Thread.currentThread().sleep(400);
+                    // Checking InputStream ... !
+                    if (ois.available() > 0) {
+                        command = ois.readUTF();
+                    }
+
+
+                    if (command != null && command.equals("quit")) {
+                        synchronized (watchers) {
+                            watchers.remove(userAndHandler);
+                        }
+                        synchronized (userAndHandler.getUserHandler()) {
+                            userAndHandler.getUserHandler().notify();
+                        }
+                    }
+                    break;
+                }
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            }
+
+
+        }
+    }
+
+
+    public void setOwnerShipToRectangles(Box[][] boxes, String username, LinkedHashSet<Edge> edges) {
+        for (Box[] boxArray :
+                boxes) {
+            for (Box box :
+                    boxArray) {
+                boolean boxFilled = true;
+                for (Edge edge : box.edges) {
+                    if (!edge.isChosen)
+                        boxFilled = false;
+                }
+                if (boxFilled) {
+                    box.setOwner(username);
+                }
+            }
+        }
+    }
+
+    public boolean allEdgesChosen(LinkedHashSet<Edge> edges) {
+        for (Edge edge :
+                edges) {
+            if (!edge.isChosen)
+                return false;
+        }
+        return true;
+    }
+
+    public void print(Box[][] boxes) {
+        for (Box[] boxArray :
+                boxes) {
+            for (Box box :
+                    boxArray) {
+
+                System.out.print(box + " ");
+
+            }
+            System.out.println();
+
+        }
+
+    }
+
+    public int boxesCount(Box[][] boxes, String user) {
+
+        int count = 0;
+        for (Box[] boxArray :
+                boxes) {
+            for (Box box :
+                    boxArray) {
+                if (box.owner != null && box.owner.equals(user))
+                    count++;
+            }
+        }
+
+        return count;
+    }
+
+    public void dotsGameProvider() {
+
+        int playersCount = capacity;
+
+
+        /* Initializing Boxes , Edges , Dots ,(Server Data) ... */
+        LinkedHashSet<Edge> edges = new LinkedHashSet<>();
+        Box[][] boxes = new Box[6][6];
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 2; j++) {
+                boxes[j][i] = new Box();
+                boxes[j][i].setDotsAndEdges(i, j);
+                edges.addAll(boxes[j][i].edges);
+            }
+        }
+
+
+        int turn = 0;
+        boolean turnMustChange = true ;
+        HashMap<String, Integer> usersScores = new HashMap<>();
+
+        try {
+            while (!allEdgesChosen(edges)) {
+
+                for (int i = 0; i < gamers.size(); i++) {
+                    ObjectOutputStream oos = gamers.get(i).getUserHandler().getOos();
+                    oos.writeUTF("continue");
+                    oos.flush();
+                }
+
+                for (int i = 0; i < gamers.size(); i++) {
+                    ObjectOutputStream oos = gamers.get(i).getUserHandler().getOos();
+                    if (i == turn) {
+                        oos.writeUTF("turn");
+
+                    } else
+                        oos.writeUTF("wait");
+
+                    oos.flush();
+                }
+
+
+                //  user's Data ( user is specified according to turn )
+                String username = gamers.get(turn).getUser().getUsername();
+                ObjectInputStream ois = gamers.get(turn).getUserHandler().getOis();
+                int userInitialScore = boxesCount(boxes , username) ;
+
+                // Edge Components
+                int x1, x2, y1, y2;
+
+                // Getting & Parsing Edge Components From User
+                String userEdgeBeginAndEnd = ois.readUTF();
+                x1 = Integer.parseInt(String.valueOf(userEdgeBeginAndEnd.charAt(0)));
+                y1 = Integer.parseInt(String.valueOf(userEdgeBeginAndEnd.charAt(1)));
+                x2 = Integer.parseInt(String.valueOf(userEdgeBeginAndEnd.charAt(2)));
+                y2 = Integer.parseInt(String.valueOf(userEdgeBeginAndEnd.charAt(3)));
+
+
+                Edge edge = new Edge(new Dot(x1, y1), new Dot(x2, y2));
+                for (Edge edge1 :
+                        edges) {
+                    if (edge.equals(edge1))
+                        edge1.setChosen(true);
+                }
+                setOwnerShipToRectangles(boxes, username, edges);
+
+                // This Statement is For Testing Server ( Should be Removed ! )
+                print(boxes);
+
+                // Checking and Storing Scores
+
+                for (int i = 0; i < gamers.size(); i++) {
+                    String userName = gamers.get(i).getUser().getUsername();
+                    usersScores.put(userName, boxesCount(boxes, userName));
+                }
+
+                for (int i = 0; i < gamers.size(); i++) {
+                    ObjectOutputStream outStream = gamers.get(i).getUserHandler().getOos();
+
+                    // Sending Boxes State
+                    outStream.writeObject(boxes);
+                    outStream.flush();
+
+                    // Sending Scores
+                    outStream.writeObject(usersScores);
+                    outStream.flush();
+
+                    int userFinalScore = boxesCount(boxes , username) ;
+                    if( userFinalScore > userInitialScore)
+                        turnMustChange = false;
+                }
+                if(turnMustChange) {
+                    turn++;
+                    if (turn > gamers.size() - 1)
+                        turn = 0;
+                }
+
+            }
+            // endGame message ....
+            for (int i = 0; i < gamers.size(); i++) {
+                ObjectOutputStream oos = gamers.get(i).getUserHandler().getOos();
+                oos.writeUTF("finish");
+                oos.flush();
+            }
+
+            // GroupGameReport Should Be Sent to each pair of gamers ....
+            GroupGameReportMessage ggrm = new GroupGameReportMessage(new Date() , usersScores) ;
+
+            for (int i = 0 ; i < gamers.size() ; i++){
+                for (int j = i+1 ; j < gamers.size() ; j++){
+                    User user1 = gamers.get(i).getUser() ;
+                    User user2 = gamers.get(i).getUser() ;
+                    if (user1.getConversation(user2) == null){
+                        Conversation conversation = new Conversation();
+                        user1.addConversation(user2 , conversation);
+                        user2.addConversation(user1 , conversation);
+                        conversation.sendMessage(ggrm);
+                    }
+                    else {
+                        user1.getConversation(user2).sendMessage(ggrm);
+                    }
+                }
+            }
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+    }
 }
+
+// These Classes Are implemented to ease DotGame Representation in Client
+class Dot implements Serializable {
+    public int x;
+    public int y;
+
+    public Dot(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Dot dot = (Dot) o;
+        return x == dot.x &&
+                y == dot.y;
+    }
+
+}
+
+class Edge implements Serializable {
+    public Dot begin;
+    public Dot end;
+    public boolean isChosen = false;
+
+    public Edge(Dot begin, Dot end) {
+        this.begin = begin;
+        this.end = end;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Edge edge = (Edge) o;
+        return (begin.equals(edge.begin) && end.equals(edge.end)) ||
+                (begin.equals(edge.end) && end.equals(edge.begin));
+    }
+
+    public void setChosen(boolean state) {
+        isChosen = state;
+    }
+
+}
+
+// each Box has an Owner :)
+class Box implements Serializable {
+
+    //order is important
+    public ArrayList<Dot> dots;
+    public ArrayList<Edge> edges;
+
+    public String owner = null;
+//    public Edge e12 ;
+//
+//
+//    public Edge e13 ;
+//
+//
+//    public Edge e24 ;
+//
+//
+//    public Edge e34 ;
+
+
+    public Box() {
+        dots = new ArrayList<>();
+        edges = new ArrayList<>();
+    }
+
+    public void setDotsAndEdges(int boxX, int boxY) {
+        dots.add(new Dot(boxX, boxY));
+        dots.add(new Dot(boxX + 1, boxY));
+        dots.add(new Dot(boxX, boxY + 1));
+        dots.add(new Dot(boxX + 1, boxY + 1));
+
+        edges.add(new Edge(dots.get(0), dots.get(1))); // e12 --> index == 0
+        edges.add(new Edge(dots.get(0), dots.get(2))); // e13 --> index == 1
+        edges.add(new Edge(dots.get(1), dots.get(3))); // e24 --> index == 2
+        edges.add(new Edge(dots.get(2), dots.get(3))); // e34 --> index == 3
+    }
+
+//        12
+///     1- - -2
+///  13 | box | 24
+//      3- - -4
+//         34
+
+    public void setOwner(String username) {
+        owner = username;
+    }
+
+    @Override
+    public String toString() {
+        String out = "";
+        if (edges.get(1).isChosen) {
+            out += "|";
+        } else
+            out += " ";
+
+        if (edges.get(0).isChosen) {
+            out += "-";
+        } else
+            out += " ";
+        if (edges.get(3).isChosen) {
+            out += "_";
+        } else
+            out += " ";
+        if (edges.get(2).isChosen) {
+            out += "|";
+        } else
+            out += " ";
+
+        return out;
+
+    }
+}
+
+
 

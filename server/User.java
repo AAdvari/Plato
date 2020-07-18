@@ -25,6 +25,7 @@ public class User implements Serializable {
         this.gamesList = new ConcurrentHashMap<>();
         gamesList.put("xo" , 0);
         gamesList.put("guessWord" , 0) ;
+        gamesList.put("dotsGame" , 0) ;
 
 
         this.conversations = new ConcurrentHashMap<>();

@@ -153,8 +153,6 @@ public class Client {
                     }
                     break;
                 }
-
-
                 case "get_rooms": {
                     ConcurrentHashMap<Integer, RoomInfo> rooms = (ConcurrentHashMap<Integer, RoomInfo>) ois.readObject();
                     System.out.println(rooms);
