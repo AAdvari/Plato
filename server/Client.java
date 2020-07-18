@@ -322,9 +322,13 @@ public class Client {
     }
 
 
-    public static void xoGameStream(ObjectOutputStream oos, ObjectInputStream ois){}
+    public static void xoGameStream(ObjectOutputStream oos, ObjectInputStream ois){
+
+    }
     public static void DotsGameStream(ObjectOutputStream oos, ObjectInputStream ois){}
     public static void GuessWordGameStream(ObjectOutputStream oos, ObjectInputStream ois){}
+
+
 
 
 
