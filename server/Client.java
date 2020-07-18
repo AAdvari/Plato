@@ -205,7 +205,7 @@ public class Client {
         }
     }
 
-    public static void guessWordGame(ObjectOutputStream oos, ObjectInputStream ois) throws IOException, ClassNotFoundException {
+    public static void guessWordGame(ObjectOutputStream oos, ObjectInputStream ois) throws IOException {
         Scanner scanner = new Scanner(System.in);
 
         for (int i = 0; i < 2; i++) {
@@ -253,6 +253,7 @@ public class Client {
         System.out.println(finalResult);
 
     }
+
 
     public static void dotsGame(ObjectOutputStream oos, ObjectInputStream ois) {
 
@@ -305,7 +306,6 @@ public class Client {
 
 
     }
-
     public static void print(Box[][] boxes) {
         for (Box[] boxArray :
                 boxes) {
@@ -320,6 +320,13 @@ public class Client {
         }
 
     }
+
+
+    public static void xoGameStream(ObjectOutputStream oos, ObjectInputStream ois){}
+    public static void DotsGameStream(ObjectOutputStream oos, ObjectInputStream ois){}
+    public static void GuessWordGameStream(ObjectOutputStream oos, ObjectInputStream ois){}
+
+
 
 
 }
