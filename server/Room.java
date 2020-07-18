@@ -110,6 +110,10 @@ public class Room extends Thread {
                 guessWordGameProvider();
                 break;
             }
+            case "dotsGame":{
+                dotsGameProvider();
+                break;
+            }
         }
         gameStarted = false;
 
@@ -630,7 +634,7 @@ public class Room extends Thread {
                     if (!edge.isChosen)
                         boxFilled = false;
                 }
-                if (boxFilled) {
+                if (boxFilled && box.owner==null) {
                     box.setOwner(username);
                 }
             }
@@ -684,8 +688,8 @@ public class Room extends Thread {
         /* Initializing Boxes , Edges , Dots ,(Server Data) ... */
         LinkedHashSet<Edge> edges = new LinkedHashSet<>();
         Box[][] boxes = new Box[6][6];
-        for (int i = 0; i < 2; i++) {
-            for (int j = 0; j < 2; j++) {
+        for (int i = 0; i < 6; i++) {
+            for (int j = 0; j < 6; j++) {
                 boxes[j][i] = new Box();
                 boxes[j][i].setDotsAndEdges(i, j);
                 edges.addAll(boxes[j][i].edges);
@@ -756,6 +760,7 @@ public class Room extends Thread {
                     ObjectOutputStream outStream = gamers.get(i).getUserHandler().getOos();
 
                     // Sending Boxes State
+                    outStream.reset();
                     outStream.writeObject(boxes);
                     outStream.flush();
 
@@ -766,6 +771,8 @@ public class Room extends Thread {
                     int userFinalScore = boxesCount(boxes , username) ;
                     if( userFinalScore > userInitialScore)
                         turnMustChange = false;
+                    else
+                        turnMustChange = true ;
                 }
                 if(turnMustChange) {
                     turn++;
@@ -774,6 +781,7 @@ public class Room extends Thread {
                 }
 
             }
+
             // endGame message ....
             for (int i = 0; i < gamers.size(); i++) {
                 ObjectOutputStream oos = gamers.get(i).getUserHandler().getOos();
@@ -781,10 +789,15 @@ public class Room extends Thread {
                 oos.flush();
             }
 
-            // GroupGameReport Should Be Sent to each pair of gamers ....
+            // GroupGameReport Should Be Sent to each pair of gamers (new Chat ) ....
             GroupGameReportMessage ggrm = new GroupGameReportMessage(new Date() , usersScores) ;
 
             for (int i = 0 ; i < gamers.size() ; i++){
+
+                // Adding Score :
+                String user = gamers.get(i).getUser().getUsername() ;
+                gamers.get(i).getUser().addScoreToGame( usersScores.get(user)*10 , "dotsGame" ) ;
+
                 for (int j = i+1 ; j < gamers.size() ; j++){
                     User user1 = gamers.get(i).getUser() ;
                     User user2 = gamers.get(i).getUser() ;
