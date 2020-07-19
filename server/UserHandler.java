@@ -120,7 +120,9 @@ public class UserHandler implements Runnable {
                         room.addUser(new UserAndHandler(currentUser , this));
                         rooms.put(room.getRoomId(), room);
                         room.start();
-                        room.join();
+                        synchronized (this){
+                            this.wait();
+                        }
 
                         break;
                     }
@@ -130,7 +132,9 @@ public class UserHandler implements Runnable {
                         System.out.println(joiningRoom);
                         joiningRoom.addUser(new UserAndHandler(currentUser, this));
                         System.out.println("User Added !");
-                        joiningRoom.join();
+                        synchronized (this){
+                            this.wait();
+                        }
                         break;
                         // changing GameRunning boolean is done in addUser method (Room Class)
                     }

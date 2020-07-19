@@ -83,7 +83,7 @@ public class User implements Serializable {
         return gamesList.get(game) ;
     }
     public Conversation getConversation(User destUser){
-        return conversations.get(destUser) ;
+        return conversations.getOrDefault(destUser, null);
     }
     public synchronized void addConversation(User destUser , Conversation conversation){
         conversations.put(destUser , conversation) ;

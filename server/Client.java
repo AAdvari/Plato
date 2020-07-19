@@ -1,5 +1,7 @@
 package Plato.server;
 
+import com.sun.jdi.connect.Connector;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.*;
@@ -14,8 +16,6 @@ public class Client {
         ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
         oos.flush();
         ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-
-        System.out.println("ss");
 
         User current = null;
 
@@ -115,21 +115,11 @@ public class Client {
 
                     oos.reset();
 
-                    String gamersExitHandler = null;
-                    while (true) {
-                        System.out.println("Your in GameProvider Loop");
-//                        gamersExitHandler = scanner.nextLine();
 
-//                        oos.writeUTF(gamersExitHandler);
-//                        oos.flush();
-                        if (gamersExitHandler != null && gamersExitHandler.equals("quit"))
-                            break;
-                        else {
-                            guessWordGame(oos, ois);
-                            break;
-                        }
-                    }
+
+                    dotsGame(oos, ois);
                     break;
+
                 }
                 case "join_room": {
                     System.out.println("Enter id:");
@@ -139,20 +129,8 @@ public class Client {
                     oos.flush();
 
                     oos.reset();
-                    String gamersExitHandler = null;
-                    while (true) {
-                        System.out.println("Your in GameProvider Loop");
-//                        gamersExitHandler = scanner.nextLine();
 
-//                        oos.writeUTF(gamersExitHandler);
-//                        oos.flush();
-                        if (gamersExitHandler != null && gamersExitHandler.equals("quit"))
-                            break;
-                        else {
-                            guessWordGame(oos, ois);
-                            break;
-                        }
-                    }
+                    dotsGame(oos, ois);
                     break;
                 }
                 case "get_rooms": {
@@ -166,7 +144,7 @@ public class Client {
                     scanner.nextLine();
                     oos.writeInt(id);
                     oos.flush();
-                    GuessWordGameStream(oos, ois);
+                    DotsGameStream(oos, ois);
                     break;
                 }
             }
@@ -275,16 +253,23 @@ public class Client {
 
     }
 
-
     public static void dotsGame(ObjectOutputStream oos, ObjectInputStream ois) {
+
 
         Scanner scanner = new Scanner(System.in);
         Box[][] boxes;
-        try {
-            while (true) {
-                String whatToDo = ois.readUTF();
+        String whatToDo;
 
-                if (whatToDo.equals("continue")) {
+
+        BooleanWrapper gameState = new BooleanWrapper(false);
+
+        try {
+            while (!gameState.bool) {
+                whatToDo = null ;
+                if (ois.available() > 0) {
+                    whatToDo = ois.readUTF();
+                }
+                if (whatToDo != null && whatToDo.equals("continue")) {
 
                     String moveOrWait = ois.readUTF();
                     if (moveOrWait.equals("turn")) {
@@ -316,7 +301,7 @@ public class Client {
 
 
                 }
-                if (whatToDo.equals("finish")) {
+                if (whatToDo != null && whatToDo.equals("finish")) {
                     break;
                 }
 
@@ -343,8 +328,11 @@ public class Client {
 
     }
 
-
     public static void xoGameStream(ObjectOutputStream oos, ObjectInputStream ois) throws IOException, ClassNotFoundException {
+
+        Scanner scanner = new Scanner(System.in) ;
+
+
         while (true) {
             String state = ois.readUTF();
             if (state.equals("run")) {
@@ -366,18 +354,53 @@ public class Client {
 
     public static void DotsGameStream(ObjectOutputStream oos, ObjectInputStream ois) throws IOException, ClassNotFoundException {
 
-        while (true) {
-            String state = ois.readUTF();
-            if (state.equals("run")) {
+        BooleanWrapper stopStream = new BooleanWrapper(false) ;
+        Scanner scanner = new Scanner(System.in)  ;
 
-                Box[][] boxes = (Box[][]) ois.readObject();
-                HashMap<String, Integer> userScores = (HashMap<String, Integer>) ois.readObject();
+        (new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true){
+                    if(scanner.hasNext()){
+                        String command = scanner.nextLine();
+                        try {
+                            oos.writeUTF(command);
+                            oos.flush();
+
+                            if(command.equals("quit")){
+                                stopStream.setBoolean(true);
+                                break;
+                            }
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+
+            }
+        })).start();
+
+        String state = null ;
+        Box[][] boxes  ;
+        HashMap<String, Integer> userScores  ;
+        while ( ! stopStream.bool) {
+
+            if(ois.available() > 0 ) {
+                 state = ois.readUTF();
+            }
+            if ( state!=null && state.equals("run")) {
+
+                boxes = (Box[][]) ois.readObject();
+                userScores = (HashMap<String, Integer>) ois.readObject();
 
                 print(boxes);
                 System.out.println(userScores);
 
+                state = null;
+
             }
-            if (state.equals("end"))
+            if ( state!=null && state.equals("end"))
                 break;
         }
 

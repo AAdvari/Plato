@@ -16,15 +16,14 @@ public class Room extends Thread {
     private final String type; //"casual" or "ranked"
 
     private volatile int capacity;
-    private volatile boolean gamersReadyForCount = false;
     private volatile boolean gameStarted = false;
 
 
     private volatile ArrayList<UserAndHandler> gamers;
     private volatile ConcurrentHashMap<Integer, Room> rooms;
     private volatile ArrayList<UserAndHandler> watchers;
-    private volatile ArrayList<GamersExitHandler> exitHandlers ;
-    private volatile ArrayList<StreamHandler> streamHandlers ;
+    private volatile ArrayList<GamersExitHandler> exitHandlers;
+    private volatile ArrayList<StreamHandler> streamHandlers;
 
 
     public Room(String type, String name, ConcurrentHashMap<Integer, Room> rooms, int capacity) {
@@ -35,8 +34,8 @@ public class Room extends Thread {
         this.rooms = rooms;
         gamers = new ArrayList<>();
         watchers = new ArrayList<>();
-        exitHandlers = new ArrayList<>() ;
-        streamHandlers = new ArrayList<>() ;
+        exitHandlers = new ArrayList<>();
+        streamHandlers = new ArrayList<>();
 
         id = number;
         number++;
@@ -51,11 +50,8 @@ public class Room extends Thread {
 
         gamers.add(user);
 
-        if (getUsersCount() == capacity)
-            gamersReadyForCount = true;
-
-        GamersExitHandler gamerExitHandler = new GamersExitHandler(user) ;
-        exitHandlers.add(gamerExitHandler) ;
+        GamersExitHandler gamerExitHandler = new GamersExitHandler(user);
+        exitHandlers.add(gamerExitHandler);
 
         gamerExitHandler.start();
 
@@ -79,13 +75,13 @@ public class Room extends Thread {
     }
 
     private boolean areGamersReadyToCount() {
-        return gamersReadyForCount;
+        return gamers.size() == capacity;
     }
 
     public void addWatcher(UserAndHandler watchingUser) {
         watchers.add(watchingUser);
-        StreamHandler streamHandler = new StreamHandler(watchingUser) ;
-        streamHandlers.add(streamHandler) ;
+        StreamHandler streamHandler = new StreamHandler(watchingUser);
+        streamHandlers.add(streamHandler);
         streamHandler.start();
 
     }
@@ -104,6 +100,8 @@ public class Room extends Thread {
                     break;
             }
             gameStarted = true;
+
+            // Waiting for ExitHandlers to Terminate for Starting Game ...
             for (GamersExitHandler exitHandler :
                     exitHandlers) {
                 try {
@@ -133,9 +131,19 @@ public class Room extends Thread {
                 break;
             }
         }
+
         gameStarted = false;
-        for (StreamHandler streamHandler   :
-             streamHandlers ) {
+
+        // Notifying Sleeping Threads (Containing Gamers And Watchers )
+        for (UserAndHandler userAndHandler :
+                gamers) {
+            synchronized (userAndHandler.getUserHandler()) {
+                userAndHandler.getUserHandler().notify();
+            }
+        }
+
+        for (StreamHandler streamHandler :
+                streamHandlers) {
             try {
                 streamHandler.join();
             } catch (InterruptedException e) {
@@ -245,8 +253,8 @@ public class Room extends Thread {
                     else
                         turnMustChange = true;
                 }
-                    //Sending Data To Watchers
-                    sendDotsGameDataToWatchers(boxes , usersScores);
+                //Sending Data To Watchers
+                sendDotsGameDataToWatchers(boxes, usersScores);
 
                 if (turnMustChange) {
                     turn++;
@@ -270,7 +278,7 @@ public class Room extends Thread {
             for (int i = 0; i < gamers.size(); i++) {
 
                 // Adding Score :
-                if(type.equals("ranked")) {
+                if (type.equals("ranked")) {
                     String user = gamers.get(i).getUser().getUsername();
                     gamers.get(i).getUser().addScoreToGame(usersScores.get(user) * 10, "dotsGame");
                 }
@@ -296,6 +304,7 @@ public class Room extends Thread {
 
 
     }
+
     private void xoGameProvider() {
         // O and X
         char[][] table = new char[3][3];
@@ -326,9 +335,6 @@ public class Room extends Thread {
                 player2Oos.flush();
 
 
-
-
-
                 if (turn == 'O') {
                     String move = player1Ois.readUTF();
                     // ADD move To Table
@@ -337,11 +343,10 @@ public class Room extends Thread {
                     int col = Integer.parseInt(String.valueOf(move.charAt(1)));
 
 
-
                     table[row][col] = 'O';
                     printTable(table);
 
-                    sendXOTableToWatchers(table , player1Data.getUser().getUsername() , player2Data.getUser().getUsername());
+                    sendXOTableToWatchers(table, player1Data.getUser().getUsername(), player2Data.getUser().getUsername());
 
 
                     char result = isGameFinished(table); //C == Continue  / D == Draw // O,X == Win
@@ -384,7 +389,7 @@ public class Room extends Thread {
                     printTable(table);
 
 
-                    sendXOTableToWatchers(table , player1Data.getUser().getUsername() , player2Data.getUser().getUsername());
+                    sendXOTableToWatchers(table, player1Data.getUser().getUsername(), player2Data.getUser().getUsername());
 
                     char result = isGameFinished(table);
                     if (isGameFinished(table) == 'X') {
@@ -423,14 +428,12 @@ public class Room extends Thread {
             }
 
 
-
             if (type.equals("ranked") && isGameFinished(table) != 'D')
                 winner.addWinScoreToGame("xo");
             if (type.equals("ranked") && isGameFinished(table) == 'D') {
                 winner.addDrawScoreToGame("xo");
                 looser.addDrawScoreToGame("xo");
             }
-
             if (winner.getConversation(looser) == null) {
                 Conversation conversation = new Conversation();
                 winner.addConversation(looser, conversation);
@@ -446,6 +449,7 @@ public class Room extends Thread {
         }
 
     }
+
     private void guessWordGameProvider() {
 
         UserAndHandler player1Data = gamers.get(0);
@@ -465,8 +469,8 @@ public class Room extends Thread {
         ObjectOutputStream guessOos = player2Oos;
         ObjectInputStream guessOis = player2Ois;
 
-        String guessingUsername = player2Data.getUser().getUsername() ;
-        String waitingUsername = player1Data.getUser().getUsername() ;
+        String guessingUsername = player2Data.getUser().getUsername();
+        String waitingUsername = player1Data.getUser().getUsername();
 
         // game has 2 Rounds ....
         String chosenWord;
@@ -510,7 +514,7 @@ public class Room extends Thread {
                     chooseOos.flush();
 
                     // SendingData To Watchers ..
-                    sendGuessWordGameDataToWatchers(String.valueOf(word) , guessingUsername , waitingUsername);
+                    sendGuessWordGameDataToWatchers(String.valueOf(word), guessingUsername, waitingUsername);
 
                     chances--;
                 }
@@ -542,8 +546,8 @@ public class Room extends Thread {
                 chooseOis = player2Ois;
                 chooseOos = player2Oos;
 
-                guessingUsername = player1Data.getUser().getUsername() ;
-                waitingUsername = player2Data.getUser().getUsername() ;
+                guessingUsername = player1Data.getUser().getUsername();
+                waitingUsername = player2Data.getUser().getUsername();
 
                 chosenWord = null;
                 word = null;
@@ -576,6 +580,16 @@ public class Room extends Thread {
                         winner.addWinScoreToGame("guessWord");
                     }
                 }
+
+                if (winner.getConversation(looser) == null) {
+                    Conversation conversation = new Conversation();
+                    winner.addConversation(looser, conversation);
+                    looser.addConversation(winner, conversation);
+                }
+
+                winner.getConversation(looser).sendMessage
+                        (new GameReportMessage(new Date(), "guessWord", winner.getUsername(), looser.getUsername(), false));
+
             } else {
                 player2Oos.writeUTF("draw");
                 player2Oos.flush();
@@ -585,20 +599,23 @@ public class Room extends Thread {
                     player1Data.getUser().addDrawScoreToGame("guessWord");
                     player2Data.getUser().addDrawScoreToGame("guessWord");
                 }
+                User user1 = player1Data.getUser();
+                User user2 = player2Data.getUser();
+                if (user1.getConversation(user2) == null) {
+                    Conversation conversation = new Conversation();
+                    user1.addConversation(user2, conversation);
+                    user2.addConversation(user1, conversation);
+                }
+                user1.getConversation(user2).sendMessage
+                        (new GameReportMessage(new Date(), "guessWord", user1.getUsername(), user2.getUsername(), true));
 
             }
-
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
     }
 
-
     /* Utility Methods For Providers */
-
-
     /*
     guessWordGame utility method
      */
@@ -764,14 +781,12 @@ public class Room extends Thread {
     }
 
 
-
-
     /* Stream Providers */
-    private void sendXOTableToWatchers(char[][] table , String OUsername ,String XUsername) {
+    private void sendXOTableToWatchers(char[][] table, String OUsername, String XUsername) {
 
         for (UserAndHandler userAndHandler : watchers) {
             try {
-                ObjectOutputStream oos = userAndHandler.getUserHandler().getOos() ;
+                ObjectOutputStream oos = userAndHandler.getUserHandler().getOos();
                 oos.reset();
                 oos.writeUTF("run");
                 oos.flush();
@@ -823,14 +838,16 @@ public class Room extends Thread {
                 oos.writeUTF(waitingUser);
                 oos.flush();
 
+
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
 
     }
+
     // Method Sends EndGame Message And Notifies waitingUserHandlers ...
-    private void sendEndGameMessageToWatchers(){
+    private void sendEndGameMessageToWatchers() {
         for (UserAndHandler watcher :
                 watchers) {
             ObjectOutputStream oos = watcher.getUserHandler().getOos();
@@ -838,6 +855,7 @@ public class Room extends Thread {
                 oos.reset();
                 oos.writeUTF("end");
                 oos.flush();
+
 
                 synchronized (watcher.getUserHandler()) {
                     watcher.getUserHandler().notify();
@@ -883,18 +901,27 @@ public class Room extends Thread {
                         synchronized (gamers) {
                             gamers.remove(userAndHandler);
                         }
+                        synchronized (userAndHandler.getUserHandler()) {
+                            exitHandlers.remove(this);
+                            userAndHandler.getUserHandler().notify();
+
+                        }
 
                         if (getUsersCount() == 0) {
                             rooms.remove(id);
                         }
+
+                        break;
                     }
-                    if (command != null && command.startsWith("change_capacity") && name.equals("dotsGame")) {
+                    if (command != null && command.startsWith("change_capacity") && name.equals("dotsGame") && userAndHandler.equals(gamers.get(0))) {
                         int newCapacity = Integer.parseInt(String.valueOf(command.charAt(15)));
                         capacity = newCapacity;
                     }
 
                 }
-            } catch (IOException  e) {
+            } catch (IOException e) {
+                gamers.remove(userAndHandler);
+                exitHandlers.remove(this);
                 e.printStackTrace();
             }
 
@@ -920,8 +947,8 @@ public class Room extends Thread {
         @Override
         public void run() {
             try {
-                while (gameStarted) {
                     String command = null;
+                while (gameStarted) {
 
                     // Checking InputStream ... !
                     if (ois.available() > 0) {
@@ -932,22 +959,38 @@ public class Room extends Thread {
                     if (command != null && command.equals("quit")) {
                         synchronized (watchers) {
                             watchers.remove(userAndHandler);
+
+
+                        }
+                        synchronized (streamHandlers){
+                            streamHandlers.remove(this) ;
+
                         }
                         synchronized (userAndHandler.getUserHandler()) {
                             userAndHandler.getUserHandler().notify();
+
                         }
+                        break;
                     }
 
                 }
             } catch (IOException e) {
-                watchers.remove(userAndHandler) ;
+                synchronized (watchers) {
+                    watchers.remove(userAndHandler);
+                }
+                synchronized (streamHandlers){
+                    streamHandlers.remove(this) ;
+                }
+                synchronized (userAndHandler.getUserHandler()){
+                    userAndHandler.getUserHandler().notify();
+                }
+
                 e.printStackTrace();
             }
 
 
         }
     }
-
 
 
 }
