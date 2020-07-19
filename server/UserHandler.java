@@ -115,6 +115,7 @@ public class UserHandler implements Runnable {
                         type = ois.readUTF() ;
                         capacity = ois.readInt() ;
 
+
                         Room room = new Room(type, name, rooms, capacity);
                         room.addUser(new UserAndHandler(currentUser , this));
                         rooms.put(room.getRoomId(), room);
@@ -147,6 +148,7 @@ public class UserHandler implements Runnable {
                     case "watch": {
                         int roomId = ois.readInt();
                         Room watchingRoom = rooms.get(roomId);
+                        watchingRoom.addWatcher(new UserAndHandler(currentUser , this));
                         synchronized (this){
                             this.wait();
                         };
@@ -179,12 +181,16 @@ public class UserHandler implements Runnable {
                         usersScores.sort((o1, o2) -> o1.getScore().compareTo(o2.getScore()));
                         oos.writeObject(usersScores);
                         oos.flush() ;
+                        break;
+
                     }
+
+
                 }
 
             } catch (IOException e) {
 
-                // What if user disconnects ? (maybe in the game )
+
                 System.out.println("!");
                 e.printStackTrace();
                 break;
@@ -196,13 +202,6 @@ public class UserHandler implements Runnable {
 
     }
 
-//    public DataInputStream getDis() {
-//        return dis;
-//    }
-//
-//    public DataOutputStream getDos() {
-//        return dos;
-//    }
 
     public ObjectInputStream getOis() {
         return ois;

@@ -2,6 +2,7 @@ package Plato.server;
 
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,6 +23,8 @@ public class Room extends Thread {
     private volatile ArrayList<UserAndHandler> gamers;
     private volatile ConcurrentHashMap<Integer, Room> rooms;
     private volatile ArrayList<UserAndHandler> watchers;
+    private volatile ArrayList<GamersExitHandler> exitHandlers ;
+    private volatile ArrayList<StreamHandler> streamHandlers ;
 
 
     public Room(String type, String name, ConcurrentHashMap<Integer, Room> rooms, int capacity) {
@@ -32,6 +35,8 @@ public class Room extends Thread {
         this.rooms = rooms;
         gamers = new ArrayList<>();
         watchers = new ArrayList<>();
+        exitHandlers = new ArrayList<>() ;
+        streamHandlers = new ArrayList<>() ;
 
         id = number;
         number++;
@@ -49,7 +54,11 @@ public class Room extends Thread {
         if (getUsersCount() == capacity)
             gamersReadyForCount = true;
 
-        new Thread(new GamersExitHandler(user)).start();
+        GamersExitHandler gamerExitHandler = new GamersExitHandler(user) ;
+        exitHandlers.add(gamerExitHandler) ;
+
+        gamerExitHandler.start();
+
 
     }
 
@@ -73,13 +82,13 @@ public class Room extends Thread {
         return gamersReadyForCount;
     }
 
-
     public void addWatcher(UserAndHandler watchingUser) {
         watchers.add(watchingUser);
-        new Thread(new StreamHandler(watchingUser)).start();
+        StreamHandler streamHandler = new StreamHandler(watchingUser) ;
+        streamHandlers.add(streamHandler) ;
+        streamHandler.start();
 
     }
-
 
     @Override
     public void run() {
@@ -95,6 +104,15 @@ public class Room extends Thread {
                     break;
             }
             gameStarted = true;
+            for (GamersExitHandler exitHandler :
+                    exitHandlers) {
+                try {
+                    exitHandler.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+            }
 
         } catch (InterruptedException e) {
             System.out.println("User Checker Thread Stopped !");
@@ -116,6 +134,17 @@ public class Room extends Thread {
             }
         }
         gameStarted = false;
+        for (StreamHandler streamHandler   :
+             streamHandlers ) {
+            try {
+                streamHandler.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+        }
+        sendEndGameMessageToWatchers();
+
 
     }
 
@@ -126,7 +155,6 @@ public class Room extends Thread {
     public void dotsGameProvider() {
 
         int playersCount = capacity;
-
 
         /* Initializing Boxes , Edges , Dots ,(Server Data) ... */
         LinkedHashSet<Edge> edges = new LinkedHashSet<>();
@@ -192,8 +220,8 @@ public class Room extends Thread {
                 // This Statement is For Testing Server ( Should be Removed ! )
                 print(boxes);
 
-                // Checking and Storing Scores
 
+                // Checking and Storing Scores
                 for (int i = 0; i < gamers.size(); i++) {
                     String userName = gamers.get(i).getUser().getUsername();
                     usersScores.put(userName, boxesCount(boxes, userName));
@@ -211,15 +239,15 @@ public class Room extends Thread {
                     outStream.writeObject(usersScores);
                     outStream.flush();
 
-                    //Sending Data To Watchers
-                    sendDotsGameDataToWatchers(boxes , usersScores);
-
                     int userFinalScore = boxesCount(boxes, username);
                     if (userFinalScore > userInitialScore)
                         turnMustChange = false;
                     else
                         turnMustChange = true;
                 }
+                    //Sending Data To Watchers
+                    sendDotsGameDataToWatchers(boxes , usersScores);
+
                 if (turnMustChange) {
                     turn++;
                     if (turn > gamers.size() - 1)
@@ -236,18 +264,16 @@ public class Room extends Thread {
             }
 
 
-            // Endgame message (watchers)
-            sendEndGameMessageToWatchers();
-
-
             // GroupGameReport Should Be Sent to each pair of gamers (new Chat ) ....
             GroupGameReportMessage ggrm = new GroupGameReportMessage(new Date(), usersScores);
 
             for (int i = 0; i < gamers.size(); i++) {
 
                 // Adding Score :
-                String user = gamers.get(i).getUser().getUsername();
-                gamers.get(i).getUser().addScoreToGame(usersScores.get(user) * 10, "dotsGame");
+                if(type.equals("ranked")) {
+                    String user = gamers.get(i).getUser().getUsername();
+                    gamers.get(i).getUser().addScoreToGame(usersScores.get(user) * 10, "dotsGame");
+                }
 
                 for (int j = i + 1; j < gamers.size(); j++) {
                     User user1 = gamers.get(i).getUser();
@@ -291,7 +317,6 @@ public class Room extends Thread {
             User winner = null;
             User looser = null;
 
-            boolean RolesSentToWatchers = false;
 
             while (true) {
                 System.out.println("Game Launched ! ");
@@ -301,28 +326,23 @@ public class Room extends Thread {
                 player2Oos.flush();
 
 
-                if (!RolesSentToWatchers) {
-                    String player1Username = player1Data.getUser().getUsername();
-                    String player2Username = player2Data.getUser().getUsername();
-                    for (UserAndHandler userAndHandler : watchers) {
-                        ObjectOutputStream oos = userAndHandler.getUserHandler().getOos();
-                        oos.writeUTF(player1Username + " " + "O");
-                        oos.flush();
-                        oos.writeUTF(player2Username + " " + "X");
-                    }
-                    RolesSentToWatchers = true;
-                }
+
 
 
                 if (turn == 'O') {
                     String move = player1Ois.readUTF();
                     // ADD move To Table
+                    System.out.println(move);
                     int row = Integer.parseInt(String.valueOf(move.charAt(0)));
                     int col = Integer.parseInt(String.valueOf(move.charAt(1)));
 
 
+
                     table[row][col] = 'O';
                     printTable(table);
+
+                    sendXOTableToWatchers(table , player1Data.getUser().getUsername() , player2Data.getUser().getUsername());
+
 
                     char result = isGameFinished(table); //C == Continue  / D == Draw // O,X == Win
                     if (result == 'O') {
@@ -355,12 +375,14 @@ public class Room extends Thread {
 
 
                 if (turn == 'X') {
+
                     String move = player2Ois.readUTF();
                     int row = Integer.parseInt(String.valueOf(move.charAt(0)));
                     int col = Integer.parseInt(String.valueOf(move.charAt(1)));
 
                     table[row][col] = 'X';
                     printTable(table);
+
 
                     sendXOTableToWatchers(table , player1Data.getUser().getUsername() , player2Data.getUser().getUsername());
 
@@ -400,8 +422,6 @@ public class Room extends Thread {
                     turn = 'X';
             }
 
-
-            sendEndGameMessageToWatchers();
 
 
             if (type.equals("ranked") && isGameFinished(table) != 'D')
@@ -458,6 +478,10 @@ public class Room extends Thread {
                 chooseOos.writeUTF("word");
                 chooseOos.flush();
                 chosenWord = chooseOis.readUTF();
+                //
+                System.out.println(chosenWord);
+
+
                 word = new char[chosenWord.length()];
                 for (int j = 0; j < chosenWord.length(); j++)
                     word[j] = '-';
@@ -525,7 +549,6 @@ public class Room extends Thread {
                 word = null;
 
             }
-            sendEndGameMessageToWatchers();
             User winner, looser;
             if (player1Guess ^ player2Guess) {// ^ == XOR operator
                 if (player1Guess) {
@@ -749,6 +772,7 @@ public class Room extends Thread {
         for (UserAndHandler userAndHandler : watchers) {
             try {
                 ObjectOutputStream oos = userAndHandler.getUserHandler().getOos() ;
+                oos.reset();
                 oos.writeUTF("run");
                 oos.flush();
                 oos.writeObject(table);
@@ -770,6 +794,7 @@ public class Room extends Thread {
                 watchers) {
             ObjectOutputStream oos = watcher.getUserHandler().getOos();
             try {
+                oos.reset();
                 oos.writeUTF("run");
                 oos.flush();
                 oos.writeObject(boxes);
@@ -788,6 +813,7 @@ public class Room extends Thread {
         try {
             for (UserAndHandler watcher : watchers) {
                 ObjectOutputStream oos = watcher.getUserHandler().getOos();
+                oos.reset();
                 oos.writeUTF("run");
                 oos.flush();
                 oos.writeUTF(word);
@@ -803,14 +829,19 @@ public class Room extends Thread {
         }
 
     }
-
+    // Method Sends EndGame Message And Notifies waitingUserHandlers ...
     private void sendEndGameMessageToWatchers(){
         for (UserAndHandler watcher :
                 watchers) {
             ObjectOutputStream oos = watcher.getUserHandler().getOos();
             try {
+                oos.reset();
                 oos.writeUTF("end");
                 oos.flush();
+
+                synchronized (watcher.getUserHandler()) {
+                    watcher.getUserHandler().notify();
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -823,7 +854,7 @@ public class Room extends Thread {
 
     /* These Classes Handle Client's Reactions ( can be extended ) */
 
-    class GamersExitHandler implements Runnable {
+    class GamersExitHandler extends Thread {
 
         private final UserAndHandler userAndHandler;
         private final ObjectOutputStream oos;
@@ -843,7 +874,6 @@ public class Room extends Thread {
                 while (!gameStarted) {
                     String command = null;
 
-                    Thread.currentThread().sleep(2000);
                     // Checking InputStream ... !
                     if (ois.available() > 0) {
                         command = ois.readUTF();
@@ -857,7 +887,6 @@ public class Room extends Thread {
                         if (getUsersCount() == 0) {
                             rooms.remove(id);
                         }
-                        userAndHandler.getUserHandler().notify();
                     }
                     if (command != null && command.startsWith("change_capacity") && name.equals("dotsGame")) {
                         int newCapacity = Integer.parseInt(String.valueOf(command.charAt(15)));
@@ -865,7 +894,7 @@ public class Room extends Thread {
                     }
 
                 }
-            } catch (IOException | InterruptedException e) {
+            } catch (IOException  e) {
                 e.printStackTrace();
             }
 
@@ -874,7 +903,7 @@ public class Room extends Thread {
 
     }
 
-    class StreamHandler implements Runnable {
+    class StreamHandler extends Thread {
         private final UserAndHandler userAndHandler;
         private final ObjectOutputStream oos;
         private final ObjectInputStream ois;
@@ -894,7 +923,6 @@ public class Room extends Thread {
                 while (gameStarted) {
                     String command = null;
 
-                    Thread.currentThread().sleep(400);
                     // Checking InputStream ... !
                     if (ois.available() > 0) {
                         command = ois.readUTF();
@@ -911,7 +939,8 @@ public class Room extends Thread {
                     }
 
                 }
-            } catch (IOException | InterruptedException e) {
+            } catch (IOException e) {
+                watchers.remove(userAndHandler) ;
                 e.printStackTrace();
             }
 

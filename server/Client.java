@@ -105,12 +105,15 @@ public class Client {
                     capacity = scanner.nextInt();
                     scanner.nextLine();
 
+
                     oos.writeUTF(name);
                     oos.flush();
                     oos.writeUTF(type);
                     oos.flush();
                     oos.writeInt(capacity);
                     oos.flush();
+
+                    oos.reset();
 
                     String gamersExitHandler = null;
                     while (true) {
@@ -122,7 +125,7 @@ public class Client {
                         if (gamersExitHandler != null && gamersExitHandler.equals("quit"))
                             break;
                         else {
-                            dotsGame(oos, ois);
+                            guessWordGame(oos, ois);
                             break;
                         }
                     }
@@ -134,6 +137,8 @@ public class Client {
                     scanner.nextLine();
                     oos.writeInt(id);
                     oos.flush();
+
+                    oos.reset();
                     String gamersExitHandler = null;
                     while (true) {
                         System.out.println("Your in GameProvider Loop");
@@ -144,7 +149,7 @@ public class Client {
                         if (gamersExitHandler != null && gamersExitHandler.equals("quit"))
                             break;
                         else {
-                            dotsGame(oos, ois);
+                            guessWordGame(oos, ois);
                             break;
                         }
                     }
@@ -153,6 +158,15 @@ public class Client {
                 case "get_rooms": {
                     ConcurrentHashMap<Integer, RoomInfo> rooms = (ConcurrentHashMap<Integer, RoomInfo>) ois.readObject();
                     System.out.println(rooms);
+                    break;
+                }
+                case "watch": {
+                    System.out.println("Enter Room id :");
+                    int id = scanner.nextInt();
+                    scanner.nextLine();
+                    oos.writeInt(id);
+                    oos.flush();
+                    GuessWordGameStream(oos, ois);
                     break;
                 }
             }
@@ -181,11 +195,16 @@ public class Client {
             System.out.println("Turn : " + turn);
             if (type == turn) {
                 System.out.println("EnterCoordinates");
-                int row = scanner.nextInt();
-                int col = scanner.nextInt();
-                scanner.nextLine();
-                oos.writeUTF(row + "" + col);
+
+                String move = scanner.nextLine();
+//                int row = scanner.nextInt();
+//                int col = scanner.nextInt();
+//                scanner.nextLine();
+
+//                oos.writeUTF(row + "" + col);
+                oos.writeUTF(move);
                 oos.flush();
+
 
                 String result = ois.readUTF();
                 if (result.startsWith("winner") || result.startsWith("draw")) {
@@ -217,6 +236,7 @@ public class Client {
                 while (chances > 0) {
                     System.out.println("Enter Character :");
                     char guessedChar = scanner.nextLine().charAt(0);
+                    System.out.println("guessedChar" + guessedChar);
                     oos.writeChar(guessedChar);
                     oos.flush();
 
@@ -235,6 +255,7 @@ public class Client {
                 System.out.println("Enter Word :");
                 String chosenWord = scanner.nextLine();
 
+                System.out.println(chosenWord);
                 oos.writeUTF(chosenWord);
                 oos.flush();
 
@@ -281,17 +302,17 @@ public class Client {
                         oos.flush();
 
                     }
-                    if(moveOrWait.equals("wait")){
+                    if (moveOrWait.equals("wait")) {
                         System.out.println("Wait For Others to Move ! ");
                     }
 
-                        boxes = (Box[][]) ois.readObject();
+                    boxes = (Box[][]) ois.readObject();
 
-                        HashMap<String, Integer> usersScores = (HashMap<String, Integer>) ois.readObject();
+                    HashMap<String, Integer> usersScores = (HashMap<String, Integer>) ois.readObject();
 
 
-                        print(boxes);
-                        System.out.println(usersScores);
+                    print(boxes);
+                    System.out.println(usersScores);
 
 
                 }
@@ -306,6 +327,7 @@ public class Client {
 
 
     }
+
     public static void print(Box[][] boxes) {
         for (Box[] boxArray :
                 boxes) {
@@ -322,15 +344,83 @@ public class Client {
     }
 
 
-    public static void xoGameStream(ObjectOutputStream oos, ObjectInputStream ois){
+    public static void xoGameStream(ObjectOutputStream oos, ObjectInputStream ois) throws IOException, ClassNotFoundException {
+        while (true) {
+            String state = ois.readUTF();
+            if (state.equals("run")) {
+
+                char[][] table = (char[][]) ois.readObject();
+                printTable(table);
+                String OUsername = ois.readUTF();
+                String XUsername = ois.readUTF();
+                System.out.println("O :" + OUsername);
+                System.out.println("X :" + XUsername);
+
+
+            }
+            if (state.equals("end"))
+                break;
+        }
 
     }
-    public static void DotsGameStream(ObjectOutputStream oos, ObjectInputStream ois){}
-    public static void GuessWordGameStream(ObjectOutputStream oos, ObjectInputStream ois){}
+
+    public static void DotsGameStream(ObjectOutputStream oos, ObjectInputStream ois) throws IOException, ClassNotFoundException {
+
+        while (true) {
+            String state = ois.readUTF();
+            if (state.equals("run")) {
+
+                Box[][] boxes = (Box[][]) ois.readObject();
+                HashMap<String, Integer> userScores = (HashMap<String, Integer>) ois.readObject();
+
+                print(boxes);
+                System.out.println(userScores);
+
+            }
+            if (state.equals("end"))
+                break;
+        }
+
+    }
+
+    public static void GuessWordGameStream(ObjectOutputStream oos, ObjectInputStream ois) throws IOException, ClassNotFoundException {
+
+        while (true) {
+
+            String state = ois.readUTF();
+            if (state.equals("run")) {
+
+                String word = ois.readUTF();
+                System.out.println(word);
 
 
+                System.out.println("Guessing User" + ois.readUTF());
+                System.out.println("Waiting User" + ois.readUTF());
 
 
+            }
+            if (state.equals("end"))
+                break;
+        }
+
+
+    }
+
+
+    /*
+ just for Testing Server (xo)
+  */
+    public static void printTable(char[][] table) {
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (table[i][j] == 'O' || table[i][j] == 'X')
+                    System.out.print(table[i][j]);
+                else
+                    System.out.print(" ");
+            }
+            System.out.println("");
+        }
+    }
 
 
 }
