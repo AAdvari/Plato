@@ -23,4 +23,11 @@ public class Conversation implements Serializable {
     public ArrayList<Message> getMessages() {
         return messages;
     }
+
+    @Override
+    public String toString() {
+        return "Conversation{" +
+                "messages=" + messages +
+                '}';
+    }
 }

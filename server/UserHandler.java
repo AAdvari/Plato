@@ -6,8 +6,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class UserHandler implements Runnable {
-    //    private final DataInputStream dis ;
-//    private final DataOutputStream dos ;
+
     private final ObjectInputStream ois;
     private final ObjectOutputStream oos;
     private User currentUser = null; // Will Be Assigned after Login .... !
@@ -115,11 +114,14 @@ public class UserHandler implements Runnable {
                         type = ois.readUTF() ;
                         capacity = ois.readInt() ;
 
+
                         Room room = new Room(type, name, rooms, capacity);
                         room.addUser(new UserAndHandler(currentUser , this));
                         rooms.put(room.getRoomId(), room);
                         room.start();
-                        room.join();
+                        synchronized (this){
+                            this.wait();
+                        }
 
                         break;
                     }
@@ -129,7 +131,9 @@ public class UserHandler implements Runnable {
                         System.out.println(joiningRoom);
                         joiningRoom.addUser(new UserAndHandler(currentUser, this));
                         System.out.println("User Added !");
-                        joiningRoom.join();
+                        synchronized (this){
+                            this.wait();
+                        }
                         break;
                         // changing GameRunning boolean is done in addUser method (Room Class)
                     }
@@ -147,6 +151,7 @@ public class UserHandler implements Runnable {
                     case "watch": {
                         int roomId = ois.readInt();
                         Room watchingRoom = rooms.get(roomId);
+                        watchingRoom.addWatcher(new UserAndHandler(currentUser , this));
                         synchronized (this){
                             this.wait();
                         };
@@ -179,16 +184,50 @@ public class UserHandler implements Runnable {
                         usersScores.sort((o1, o2) -> o1.getScore().compareTo(o2.getScore()));
                         oos.writeObject(usersScores);
                         oos.flush() ;
+                        break;
+
                     }
+                    case "update_username":{
+                        String newUsername = ois.readUTF() ;
+                        if(users.containsKey(newUsername))
+                            oos.writeUTF("failed");
+                        else {
+                            oos.writeUTF("successful");
+                            currentUser.setUsername(newUsername);
+                        }
+                        oos.flush();
+                        break;
+
+                    }
+                    case "update_profile_pic":{
+                        byte[] profilePicBytes = (byte[])ois.readObject() ;
+                        currentUser.setProfilePic(profilePicBytes);
+                        break;
+
+                    }
+                    case "update_bio_text":{
+                        String bioText = ois.readUTF() ;
+                        currentUser.setBioText(bioText);
+                        break;
+
+                    }
+                    // Test
+                    case "get_info":{
+                        System.out.println(currentUser);
+                        break;
+                    }
+
                 }
 
             } catch (IOException e) {
 
-                // What if user disconnects ? (maybe in the game )
+
                 System.out.println("!");
                 e.printStackTrace();
                 break;
             } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
 
@@ -196,13 +235,6 @@ public class UserHandler implements Runnable {
 
     }
 
-//    public DataInputStream getDis() {
-//        return dis;
-//    }
-//
-//    public DataOutputStream getDos() {
-//        return dos;
-//    }
 
     public ObjectInputStream getOis() {
         return ois;

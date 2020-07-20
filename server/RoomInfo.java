@@ -46,4 +46,17 @@ public class RoomInfo implements Serializable {
     public void setCapacity(int capacity) {
         this.capacity = capacity;
     }
+
+
+    //test
+
+    @Override
+    public String toString() {
+        return "RoomInfo{" +
+                "name='" + name + '\'' +
+                ", type='" + type + '\'' +
+                ", id=" + id +
+                ", capacity=" + capacity +
+                '}';
+    }
 }
