@@ -116,7 +116,7 @@ public class Client {
 
                     oos.reset();
 
-                    dotsGame(oos, ois);
+                    xoGame(oos, ois);
                     break;
                 }
                 case "join_room": {
@@ -128,7 +128,7 @@ public class Client {
 
                     oos.reset();
 
-                    dotsGame(oos, ois);
+                    xoGame(oos, ois);
                     break;
                 }
                 case "get_rooms": {
@@ -195,6 +195,10 @@ public class Client {
             }
             if (type != turn) {
                 String result = ois.readUTF();
+
+                String opponentMove = ois.readUTF() ;
+                System.out.println( opponentMove);
+
                 if (result.startsWith("winner") || result.startsWith("draw")) {
                     System.out.println(result);
                     break;
