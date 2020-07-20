@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class User implements Serializable {
-    private static final long serialVersionUID = -4651956154646L;
+    private static final long serialVersionUID = -123L;
     private String username;
     private String password;
     private volatile byte[] profilePic = null;
