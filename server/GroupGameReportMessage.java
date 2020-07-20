@@ -17,4 +17,14 @@ public class GroupGameReportMessage extends Message implements Serializable {
     public HashMap<String, Integer> getUsernamesAndScores() {
         return usernamesAndScores;
     }
+
+
+    //test
+
+    @Override
+    public String toString() {
+        return "GroupGameReportMessage{" +
+                "usernamesAndScores=" + usernamesAndScores +
+                '}';
+    }
 }

@@ -2,6 +2,7 @@ package Plato.server ;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -89,11 +90,26 @@ public class User implements Serializable {
         conversations.put(destUser , conversation) ;
     }
 
-
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
     /// Just for Test
     public ConcurrentHashMap<User, Conversation>
     getConversations() {
         return conversations;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "username='" + username + '\'' +
+                ", password='" + password + '\'' +
+                ", friends=" + friends +
+                ", bioText='" + bioText + '\'' +
+                ", gamesList=" + gamesList +
+                ", conversations=" + conversations +
+                ", friendRequests=" + friendRequests +
+                '}';
     }
 }

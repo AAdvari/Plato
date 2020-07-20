@@ -46,6 +46,10 @@ public class Room extends Thread {
         return id;
     }
 
+    public boolean isGameStarted() {
+        return gameStarted;
+    }
+
     public synchronized void addUser(UserAndHandler user) {
 
         gamers.add(user);
@@ -443,7 +447,7 @@ public class Room extends Thread {
                     (new Date(), "xo", winner.getUsername(), looser.getUsername(),
                             isGameFinished(table) == 'D'));
 
-//            rooms.remove(id);
+
         } catch (IOException e) {
             e.printStackTrace();
         }

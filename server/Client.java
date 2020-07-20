@@ -81,6 +81,7 @@ public class Client {
 
                     break;
                 }
+
                 case "send_message": {
                     System.out.println("Enter Username : ");
                     String username = scanner.nextLine();
@@ -115,11 +116,8 @@ public class Client {
 
                     oos.reset();
 
-
-
                     dotsGame(oos, ois);
                     break;
-
                 }
                 case "join_room": {
                     System.out.println("Enter id:");
@@ -145,6 +143,9 @@ public class Client {
                     oos.writeInt(id);
                     oos.flush();
                     DotsGameStream(oos, ois);
+                    break;
+                }
+                case "get_info":{
                     break;
                 }
             }

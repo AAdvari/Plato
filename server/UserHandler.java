@@ -6,8 +6,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class UserHandler implements Runnable {
-    //    private final DataInputStream dis ;
-//    private final DataOutputStream dos ;
+
     private final ObjectInputStream ois;
     private final ObjectOutputStream oos;
     private User currentUser = null; // Will Be Assigned after Login .... !
@@ -188,7 +187,35 @@ public class UserHandler implements Runnable {
                         break;
 
                     }
+                    case "update_username":{
+                        String newUsername = ois.readUTF() ;
+                        if(users.containsKey(newUsername))
+                            oos.writeUTF("failed");
+                        else {
+                            oos.writeUTF("successful");
+                            currentUser.setUsername(newUsername);
+                        }
+                        oos.flush();
+                        break;
 
+                    }
+                    case "update_profile_pic":{
+                        byte[] profilePicBytes = (byte[])ois.readObject() ;
+                        currentUser.setProfilePic(profilePicBytes);
+                        break;
+
+                    }
+                    case "update_bio_text":{
+                        String bioText = ois.readUTF() ;
+                        currentUser.setBioText(bioText);
+                        break;
+
+                    }
+                    // Test
+                    case "get_info":{
+                        System.out.println(currentUser);
+                        break;
+                    }
 
                 }
 
@@ -199,6 +226,8 @@ public class UserHandler implements Runnable {
                 e.printStackTrace();
                 break;
             } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
 

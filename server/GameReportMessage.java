@@ -15,4 +15,18 @@ public class GameReportMessage extends Message implements Serializable {
         this.winnerUsername = winnerUsername;
         this.draw = draw ;
     }
+
+
+    //test
+
+
+    @Override
+    public String toString() {
+        return "GameReportMessage{" +
+                "nameOfGame='" + nameOfGame + '\'' +
+                ", winnerUsername='" + winnerUsername + '\'' +
+                ", looserUsername='" + looserUsername + '\'' +
+                ", draw=" + draw +
+                '}';
+    }
 }
