@@ -194,10 +194,10 @@ public class Client {
 
             }
             if (type != turn) {
-                String result = ois.readUTF();
-
                 String opponentMove = ois.readUTF() ;
                 System.out.println( opponentMove);
+                String result = ois.readUTF();
+
 
                 if (result.startsWith("winner") || result.startsWith("draw")) {
                     System.out.println(result);

@@ -9,14 +9,15 @@ public class UserHandler implements Runnable {
 
     private final ObjectInputStream ois;
     private final ObjectOutputStream oos;
-    private User currentUser = null; // Will Be Assigned after Login .... !
+    private volatile User currentUser = null; // Will Be Assigned after Login .... !
 
     private volatile ConcurrentHashMap<Integer, Room> rooms;
 
-    private volatile Map<String, User> users = UsersList.getUsersList();
+    private volatile ConcurrentHashMap<String, User> users ;
 
-    public UserHandler(Socket socket, ConcurrentHashMap<Integer, Room> rooms) throws IOException {
+    public UserHandler(Socket socket, ConcurrentHashMap<Integer, Room> rooms , ConcurrentHashMap<String , User> users) throws IOException {
         this.rooms = rooms;
+        this.users = users ;
         oos = new ObjectOutputStream(socket.getOutputStream());
         oos.flush();
         ois = new ObjectInputStream(socket.getInputStream());
@@ -40,6 +41,7 @@ public class UserHandler implements Runnable {
 
                         if (users.containsKey(username) && users.get(username).getPassword().equals(password)) {
                             User foundUser = users.get(username);
+                            oos.reset();
                             oos.writeObject(foundUser);
                             this.currentUser = foundUser;
                         } else

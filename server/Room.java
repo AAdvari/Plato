@@ -350,7 +350,6 @@ public class Room extends Thread {
                     player2Oos.writeUTF(move);
                     player2Oos.flush();
 
-
                     table[row][col] = 'O';
                     printTable(table);
 
@@ -384,6 +383,8 @@ public class Room extends Thread {
                         break;
                     }
 
+
+
                 }
 
 
@@ -396,8 +397,6 @@ public class Room extends Thread {
 
                     player1Oos.writeUTF(move);
                     player1Oos.flush();
-
-
 
                     table[row][col] = 'X';
                     printTable(table);
@@ -431,7 +430,6 @@ public class Room extends Thread {
                         looser = player1Data.getUser();
                         break;
                     }
-
 
                 }
 
