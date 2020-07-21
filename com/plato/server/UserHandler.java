@@ -70,8 +70,10 @@ public class UserHandler implements Runnable {
                         username = ois.readUTF();
                         password = ois.readUTF();
                         if (!users.containsKey(username)) {
-                            users.put(username, new User(username, password));
+                            User newUser = new User(username, password);
+                            users.put(username, newUser);
                             oos.writeUTF("successful");
+                            oos.writeObject(newUser);
                         } else {
                             oos.writeUTF("failed");
                         }
