@@ -7,12 +7,14 @@ public class RoomInfo implements Serializable {
     private String type ;
     private int id ;
     private int capacity;
+    private boolean isStarted ;
 
-    public RoomInfo(String name, String type, int id, int capacity) {
+    public RoomInfo(String name, String type, int id, int capacity , boolean isStarted) {
         this.name = name;
         this.type = type;
         this.id = id;
         this.capacity = capacity;
+        this.isStarted = isStarted;
     }
 
     public String getName() {
