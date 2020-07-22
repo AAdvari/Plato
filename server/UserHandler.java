@@ -9,7 +9,7 @@ public class UserHandler implements Runnable {
 
     private final ObjectInputStream ois;
     private final ObjectOutputStream oos;
-    private volatile User currentUser = null; // Will Be Assigned after Login .... !
+    private User currentUser = null; // Will Be Assigned after Login .... !
 
     private volatile ConcurrentHashMap<Integer, Room> rooms;
 
@@ -33,6 +33,21 @@ public class UserHandler implements Runnable {
                 String command = ois.readUTF();
                 System.out.println("command :" + command);
                 switch (command) {
+
+                    case "checkUsername": {
+                        String username;
+                        username = ois.readUTF();
+                        if (users.containsKey(username)) {
+                            oos.writeUTF("username-true");
+                            System.out.println("sent true to user");
+                        } else {
+                            oos.writeUTF("username-false");
+                            System.out.println("sent false to user");
+                        }
+                        oos.flush();
+                        break;
+                    }
+
                     case "login": {
                         // These lines may change in order to simultaneous operations in client(Change it :) )
                         String username, password;
@@ -43,6 +58,7 @@ public class UserHandler implements Runnable {
                             User foundUser = users.get(username);
                             oos.reset();
                             oos.writeObject(foundUser);
+                            System.out.println("sent user object");
                             this.currentUser = foundUser;
                         } else
                             oos.writeObject(null);
@@ -56,8 +72,12 @@ public class UserHandler implements Runnable {
                         username = ois.readUTF();
                         password = ois.readUTF();
                         if (!users.containsKey(username)) {
-                            users.put(username, new User(username, password));
+                            User newUser = new User(username, password);
+                            users.put(username, newUser);
                             oos.writeUTF("successful");
+                            oos.reset();
+                            oos.writeObject(newUser);
+                            //push
                         } else {
                             oos.writeUTF("failed");
                         }
@@ -82,6 +102,7 @@ public class UserHandler implements Runnable {
                                 count++;
                             }
                         }
+                        oos.reset();
                         oos.writeObject(compatible);
                         oos.flush();
 
@@ -213,7 +234,6 @@ public class UserHandler implements Runnable {
                         break;
 
                     }
-
                     // Test
                     case "get_info":{
                         System.out.println(currentUser);
