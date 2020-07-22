@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentMap;
 public class User implements Serializable {
     private String username;
     private String password ;
+    private boolean isDefaultAvatar = true ;
     private volatile byte[] profilePic = null ;
     private volatile ArrayList<User> friends;
     private volatile String bioText ;
@@ -92,6 +93,14 @@ public class User implements Serializable {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public boolean isDefaultAvatar() {
+        return isDefaultAvatar;
+    }
+
+    public void setDefaultAvatar(boolean defaultAvatar) {
+        isDefaultAvatar = defaultAvatar;
     }
 
     /// Just for Test
