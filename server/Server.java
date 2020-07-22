@@ -31,9 +31,11 @@ public class Server {
                         file.delete() ;
                     try {
                         ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file));
-                        oos.writeObject(users.getUsers());
-                        oos.flush();
-                        oos.close();
+                        synchronized (users.getUsers()) {
+                            oos.writeObject(users.getUsers());
+                            oos.flush();
+                            oos.close();
+                        }
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -43,7 +45,6 @@ public class Server {
         updater.start();
 
 
-        /* This Part Can Be Done In Rooms .... ! */
         Thread emptyAndFullRoomRemover = new Thread( new Runnable() {
             @Override
             public void run() {
@@ -57,7 +58,7 @@ public class Server {
                         if (rooms.get(i).getUsersCount() == 0)
                             rooms.remove(i);
                         if (rooms.get(i).getUsersCount() == rooms.get(i).getCapacity() && rooms.get(i).isGameStarted()){
-                            Thread.currentThread().sleep(2500);
+                            Thread.currentThread().sleep(10000);
                             rooms.remove(i) ;
                         }
                     }
@@ -69,7 +70,7 @@ public class Server {
         });
         emptyAndFullRoomRemover.start();
 
-        ExecutorService executorService = Executors.newFixedThreadPool(20) ;
+        ExecutorService executorService = Executors.newFixedThreadPool(4000) ;
         Socket socket = null ;
         while (true){
             socket = server.accept() ;
@@ -80,7 +81,7 @@ public class Server {
 //        Socket socket = null ;
 //        while (true){
 //            socket = server.accept() ;
-//            new Thread(new UserHandler(socket,rooms)).start();
+//            new Thread(new UserHandler(socket,rooms , users.getUsers())).start();
 //        }
     }
 }

@@ -967,12 +967,9 @@ public class Room extends Thread {
                         command = ois.readUTF();
                     }
 
-
                     if (command != null && command.equals("quit")) {
                         synchronized (watchers) {
                             watchers.remove(userAndHandler);
-
-
                         }
                         synchronized (streamHandlers){
                             streamHandlers.remove(this) ;

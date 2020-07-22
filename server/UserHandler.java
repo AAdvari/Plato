@@ -144,7 +144,7 @@ public class UserHandler implements Runnable {
                         ConcurrentHashMap<Integer , RoomInfo> roomsInfo = new ConcurrentHashMap<>( );
                         for (Room room : rooms.values()){
                             roomsInfo.put( room.getRoomId() , new RoomInfo(
-                                    room.getRoomName() , room.getRoomType() ,room.getRoomId(), room.getCapacity()) ) ;
+                                    room.getRoomName() , room.getRoomType() ,room.getRoomId(), room.getCapacity() , room.isGameStarted()) ) ;
                         }
                         oos.writeObject(roomsInfo);
                         oos.flush();
@@ -213,6 +213,7 @@ public class UserHandler implements Runnable {
                         break;
 
                     }
+
                     // Test
                     case "get_info":{
                         System.out.println(currentUser);
