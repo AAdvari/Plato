@@ -108,7 +108,7 @@ public class User implements Serializable {
                 ", friends=" + friends +
                 ", bioText='" + bioText + '\'' +
                 ", gamesList=" + gamesList +
-                ", conversations=" + conversations +
+                ", conversations=" + conversations.values() +
                 ", friendRequests=" + friendRequests +
                 '}';
     }

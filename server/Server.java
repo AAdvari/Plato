@@ -10,10 +10,12 @@ import java.util.concurrent.Executors;
 
 public class Server {
 
+    public static volatile UsersList users = new UsersList() ;
     public static final String DATABASE_DIRECTORY = "c:\\Users\\AmirHossein\\Desktop\\db.plato" ;
 
     public static volatile ConcurrentHashMap<Integer , Room> rooms = new ConcurrentHashMap<>() ;
     public static void main(String args[]) throws IOException {
+
 
         ServerSocket server = new ServerSocket(4000) ;
 
@@ -29,7 +31,7 @@ public class Server {
                         file.delete() ;
                     try {
                         ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file));
-                        oos.writeObject(UsersList.getUsersList());
+                        oos.writeObject(users.getUsers());
                         oos.flush();
                         oos.close();
                     } catch (IOException e) {
@@ -67,11 +69,11 @@ public class Server {
         });
         emptyAndFullRoomRemover.start();
 
-        ExecutorService executorService = Executors.newFixedThreadPool(2) ;
+        ExecutorService executorService = Executors.newFixedThreadPool(20) ;
         Socket socket = null ;
         while (true){
             socket = server.accept() ;
-            executorService.execute(new UserHandler(socket , rooms));
+            executorService.execute(new UserHandler(socket , rooms , users.getUsers()));
 
         }
 

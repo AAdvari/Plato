@@ -19,7 +19,7 @@ public class TextMessage extends Message implements Serializable {
     @Override
     public String toString() {
         return super.toString() + "TextMessage{" +
-                "sender=" + sender +
+                "sender=" + sender.getUsername() +
                 ", content='" + content + '\'' +
                 '}';
     }
