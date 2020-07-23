@@ -1,8 +1,9 @@
-package Plato.server;
+package com.plato.server;
 
 import java.io.Serializable;
 
 public class UserScoreInfo implements Serializable {
+    private static final long serialVersionUID = -4262345L;
     private String username ;
     private Integer score ;
 

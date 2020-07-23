@@ -1,18 +1,23 @@
-package Plato.server ;
+package com.plato.server;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
+
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+
 
 public class User implements Serializable {
+    private static final long serialVersionUID = -121231233L;
     private String username;
     private String password ;
     private boolean isDefaultAvatar = true ;
     private volatile byte[] profilePic = null ;
     private volatile ArrayList<User> friends;
+
+    public void setConversations(ConcurrentHashMap<User, Conversation> conversations) {
+        this.conversations = conversations;
+    }
+
     private volatile String bioText ;
     private volatile ConcurrentHashMap<String , Integer> gamesList ; // Mapping games to their scores !
     private volatile ConcurrentHashMap<User , Conversation> conversations ;
@@ -84,9 +89,13 @@ public class User implements Serializable {
     public int getGameScore(String game){
         return gamesList.get(game) ;
     }
-    public Conversation getConversation(User destUser){
-        return conversations.getOrDefault(destUser, null);
+    public Conversation getConversation(User destUser) {
+        if (conversations.contains(destUser)) {
+            return conversations.get(destUser);
+        } else
+            return null;
     }
+
     public synchronized void addConversation(User destUser , Conversation conversation){
         conversations.put(destUser , conversation) ;
     }

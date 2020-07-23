@@ -1,4 +1,4 @@
-package Plato.server;
+package com.plato.server;
 
 import java.io.*;
 import java.net.Socket;
@@ -193,10 +193,19 @@ public class UserHandler implements Runnable {
                         Conversation conversation = currentUser.getConversation(destUser);
                         conversation.sendMessage(new TextMessage(new Date(), currentUser, messageContent));
 
+
                         System.out.println(users.get(destUsername).getConversation(currentUser).getMessages());
                         System.out.println(currentUser.getConversation(destUser).getMessages());
                         System.out.println(conversation.getMessages());
                         break;
+                    }
+
+                    case "update_chat":{
+                        ConcurrentHashMap<User, Conversation> c = currentUser.getConversations();
+                        oos.reset();
+                        oos.writeObject(c);
+                        oos.flush();
+
                     }
                     case "leader_board":{
                         String game = ois.readUTF() ;

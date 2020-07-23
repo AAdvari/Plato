@@ -1,4 +1,4 @@
-package Plato.server;
+package com.plato.server;
 
 public class BooleanWrapper {
     public volatile boolean bool ;

@@ -1,19 +1,21 @@
-package Plato.server;
+package com.plato.server;
+
 import java.io.Serializable;
 import java.util.Date;
 
 public class GameReportMessage extends Message implements Serializable {
-   private String nameOfGame ;
-   private String winnerUsername  ;
-   private String looserUsername ;
-   private boolean draw = false ;
+    private static final long serialVersionUID = -412425542345L;
+    private String nameOfGame;
+    private String winnerUsername;
+    private String looserUsername;
+    private boolean draw = false;
 
-    public GameReportMessage(Date date, String nameOfGame, String winnerUsername , String looserUsername , boolean draw) {
+    public GameReportMessage(Date date, String nameOfGame, String winnerUsername, String looserUsername, boolean draw) {
         super(date);
         this.nameOfGame = nameOfGame;
-        this.looserUsername = looserUsername ;
+        this.looserUsername = looserUsername;
         this.winnerUsername = winnerUsername;
-        this.draw = draw ;
+        this.draw = draw;
     }
 
 

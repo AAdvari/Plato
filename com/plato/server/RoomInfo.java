@@ -1,8 +1,9 @@
-package Plato.server;
+package com.plato.server;
 
 import java.io.Serializable;
 
 public class RoomInfo implements Serializable {
+    private static final long serialVersionUID = -23412545L;
     private String name ;
     private String type ;
     private int id ;

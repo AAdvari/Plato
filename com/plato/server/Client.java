@@ -1,4 +1,4 @@
-package Plato.server;
+package com.plato.server;
 
 import com.sun.jdi.connect.Connector;
 

@@ -1,8 +1,9 @@
-package Plato.server;
+package com.plato.server;
 import java.io.Serializable;
 import java.util.Date;
 
 public class TextMessage extends Message implements Serializable {
+    private static final long serialVersionUID = -1232451233L;
     private User sender ;
     private String content ;
 
