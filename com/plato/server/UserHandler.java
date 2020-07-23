@@ -200,7 +200,7 @@ public class UserHandler implements Runnable {
                         break;
                     }
 
-                    case "updateConversation":{
+                    case "update_chat":{
                         ConcurrentHashMap<User, Conversation> c = currentUser.getConversations();
                         oos.reset();
                         oos.writeObject(c);

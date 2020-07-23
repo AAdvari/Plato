@@ -11,7 +11,7 @@ import java.util.concurrent.Executors;
 public class Server {
 
     public static volatile UsersList users = new UsersList() ;
-    public static final String DATABASE_DIRECTORY = "c:\\Users\\AmirHossein\\Desktop\\db.plato" ;
+    public static final String DATABASE_DIRECTORY = "/db.plato" ;
 
     public static volatile ConcurrentHashMap<Integer , Room> rooms = new ConcurrentHashMap<>() ;
     public static void main(String args[]) throws IOException {
@@ -26,7 +26,7 @@ public class Server {
                 System.out.println("Enter update to Update Database : ");
                 String command = scanner.nextLine() ;
                 if (command.equals("update")){
-                    File file = new File("c\\Users\\AmirHossein\\Desktop\\db.plato");
+                    File file = new File("/db.plato");
                     if ( ! file.exists() )
                         file.delete() ;
                     try {

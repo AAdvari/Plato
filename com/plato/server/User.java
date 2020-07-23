@@ -13,6 +13,11 @@ public class User implements Serializable {
     private boolean isDefaultAvatar = true ;
     private volatile byte[] profilePic = null ;
     private volatile ArrayList<User> friends;
+
+    public void setConversations(ConcurrentHashMap<User, Conversation> conversations) {
+        this.conversations = conversations;
+    }
+
     private volatile String bioText ;
     private volatile ConcurrentHashMap<String , Integer> gamesList ; // Mapping games to their scores !
     private volatile ConcurrentHashMap<User , Conversation> conversations ;
