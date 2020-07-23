@@ -1,5 +1,7 @@
 package com.plato.server;
 
+import com.sun.jdi.connect.Connector;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.*;
@@ -9,7 +11,7 @@ public class Client {
     public static void main(String args[]) throws IOException, ClassNotFoundException {
         Scanner scanner = new Scanner(System.in);
 
-        Socket socket = new Socket("localhost", 3838);
+        Socket socket = new Socket("localhost", 4000);
 
         ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
         oos.flush();
@@ -192,7 +194,11 @@ public class Client {
 
             }
             if (type != turn) {
+                String opponentMove = ois.readUTF() ;
+                System.out.println( opponentMove);
                 String result = ois.readUTF();
+
+
                 if (result.startsWith("winner") || result.startsWith("draw")) {
                     System.out.println(result);
                     break;
@@ -260,54 +266,91 @@ public class Client {
         String whatToDo;
 
 
-        BooleanWrapper gameState = new BooleanWrapper(false);
+        BooleanWrapper stopMethod = new BooleanWrapper(false);
+        BooleanWrapper stopUserQuitThread = new BooleanWrapper(false);
+        Thread sendQuitMessage = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (!stopUserQuitThread.bool) {
+                    synchronized (scanner) {
+                        scanner.reset();
+                        if (scanner.hasNext()) {
+                            String command = scanner.nextLine();
 
-        try {
-            while (!gameState.bool) {
-                whatToDo = null ;
-                if (ois.available() > 0) {
-                    whatToDo = ois.readUTF();
-                }
-                if (whatToDo != null && whatToDo.equals("continue")) {
+                            if (command.equals("quit")) {
+                                try {
+                                    oos.writeUTF(command);
+                                    oos.flush();
+                                    oos.reset();
+                                    stopMethod.setBoolean(true);
+                                    scanner.reset();
+                                    break;
 
-                    String moveOrWait = ois.readUTF();
-                    if (moveOrWait.equals("turn")) {
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
 
-                        int x1, y1, x2, y2;
-                        System.out.println("Enter Coordinates : ");
-                        x1 = scanner.nextInt();
-                        y1 = scanner.nextInt();
-                        x2 = scanner.nextInt();
-                        y2 = scanner.nextInt();
 
-                        scanner.nextLine();
-                        String sendingCoordinates = String.valueOf(x1) + y1 + x2 + y2;
-                        oos.writeUTF(sendingCoordinates);
-                        oos.flush();
+                            }
 
+                        }
                     }
-                    if (moveOrWait.equals("wait")) {
-                        System.out.println("Wait For Others to Move ! ");
-                    }
-
-                    boxes = (Box[][]) ois.readObject();
-
-                    HashMap<String, Integer> usersScores = (HashMap<String, Integer>) ois.readObject();
-
-
-                    print(boxes);
-                    System.out.println(usersScores);
-
-
                 }
-                if (whatToDo != null && whatToDo.equals("finish")) {
-                    break;
-                }
-
             }
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+        });
+        sendQuitMessage.start();
+
+
+            try {
+                while (!stopMethod.bool) {
+                    whatToDo = null;
+                    if (ois.available() > 0) {
+                        whatToDo = ois.readUTF();
+                        stopUserQuitThread.setBoolean(true);
+
+                    }
+                    if (whatToDo != null && whatToDo.equals("continue")) {
+
+                        String moveOrWait = ois.readUTF();
+                        if (moveOrWait.equals("turn")) {
+
+                            int x1, y1, x2, y2;
+                            System.out.println("Enter Coordinates : ");
+                            x1 = scanner.nextInt();
+                            y1 = scanner.nextInt();
+                            x2 = scanner.nextInt();
+                            y2 = scanner.nextInt();
+
+                            scanner.nextLine();
+                            String sendingCoordinates = String.valueOf(x1) + y1 + x2 + y2;
+                            oos.writeUTF(sendingCoordinates);
+                            oos.flush();
+
+                        }
+                        if (moveOrWait.equals("wait")) {
+                            System.out.println("Wait For Others to Move ! ");
+                        }
+
+                        boxes = (Box[][]) ois.readObject();
+
+                        HashMap<String, Integer> usersScores = (HashMap<String, Integer>) ois.readObject();
+
+
+                        print(boxes);
+                        System.out.println(usersScores);
+
+
+                    }
+                    if (whatToDo != null && whatToDo.equals("finish")) {
+                        break;
+                    }
+
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+
+
 
 
     }

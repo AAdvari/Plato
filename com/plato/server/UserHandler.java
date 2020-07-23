@@ -13,10 +13,11 @@ public class UserHandler implements Runnable {
 
     private volatile ConcurrentHashMap<Integer, Room> rooms;
 
-    private volatile Map<String, User> users = UsersList.getUsersList();
+    private volatile ConcurrentHashMap<String, User> users ;
 
-    public UserHandler(Socket socket, ConcurrentHashMap<Integer, Room> rooms) throws IOException {
+    public UserHandler(Socket socket, ConcurrentHashMap<Integer, Room> rooms , ConcurrentHashMap<String , User> users) throws IOException {
         this.rooms = rooms;
+        this.users = users ;
         oos = new ObjectOutputStream(socket.getOutputStream());
         oos.flush();
         ois = new ObjectInputStream(socket.getInputStream());
@@ -55,6 +56,7 @@ public class UserHandler implements Runnable {
 
                         if (users.containsKey(username) && users.get(username).getPassword().equals(password)) {
                             User foundUser = users.get(username);
+                            oos.reset();
                             oos.writeObject(foundUser);
                             System.out.println("sent user object");
                             this.currentUser = foundUser;
@@ -73,7 +75,9 @@ public class UserHandler implements Runnable {
                             User newUser = new User(username, password);
                             users.put(username, newUser);
                             oos.writeUTF("successful");
+                            oos.reset();
                             oos.writeObject(newUser);
+                            //push
                         } else {
                             oos.writeUTF("failed");
                         }
@@ -98,6 +102,7 @@ public class UserHandler implements Runnable {
                                 count++;
                             }
                         }
+                        oos.reset();
                         oos.writeObject(compatible);
                         oos.flush();
 
@@ -160,7 +165,7 @@ public class UserHandler implements Runnable {
                         ConcurrentHashMap<Integer , RoomInfo> roomsInfo = new ConcurrentHashMap<>( );
                         for (Room room : rooms.values()){
                             roomsInfo.put( room.getRoomId() , new RoomInfo(
-                                    room.getRoomName() , room.getRoomType() ,room.getRoomId(), room.getCapacity()) ) ;
+                                    room.getRoomName() , room.getRoomType() ,room.getRoomId(), room.getCapacity() , room.isGameStarted()) ) ;
                         }
                         oos.writeObject(roomsInfo);
                         oos.flush();
@@ -188,10 +193,19 @@ public class UserHandler implements Runnable {
                         Conversation conversation = currentUser.getConversation(destUser);
                         conversation.sendMessage(new TextMessage(new Date(), currentUser, messageContent));
 
+
                         System.out.println(users.get(destUsername).getConversation(currentUser).getMessages());
                         System.out.println(currentUser.getConversation(destUser).getMessages());
                         System.out.println(conversation.getMessages());
                         break;
+                    }
+
+                    case "updateConversation":{
+                        ConcurrentHashMap<User, Conversation> c = currentUser.getConversations();
+                        oos.reset();
+                        oos.writeObject(c);
+                        oos.flush();
+
                     }
                     case "leader_board":{
                         String game = ois.readUTF() ;

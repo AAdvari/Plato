@@ -3,16 +3,19 @@ package com.plato.server;
 import java.io.Serializable;
 
 public class RoomInfo implements Serializable {
+    private static final long serialVersionUID = -23412545L;
     private String name ;
     private String type ;
     private int id ;
     private int capacity;
+    private boolean isStarted ;
 
-    public RoomInfo(String name, String type, int id, int capacity) {
+    public RoomInfo(String name, String type, int id, int capacity , boolean isStarted) {
         this.name = name;
         this.type = type;
         this.id = id;
         this.capacity = capacity;
+        this.isStarted = isStarted;
     }
 
     public String getName() {

@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 public class Conversation implements Serializable {
+    private static final long serialVersionUID = -565362345L;
     // Recall That The Order Of Messages maintains in ArrayList !
     private volatile ArrayList<Message> messages ;
 

@@ -2,6 +2,7 @@ package com.plato.server;
 
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -346,6 +347,9 @@ public class Room extends Thread {
                     int col = Integer.parseInt(String.valueOf(move.charAt(1)));
 
 
+                    player2Oos.writeUTF(move);
+                    player2Oos.flush();
+
                     table[row][col] = 'O';
                     printTable(table);
 
@@ -379,6 +383,8 @@ public class Room extends Thread {
                         break;
                     }
 
+
+
                 }
 
 
@@ -387,6 +393,10 @@ public class Room extends Thread {
                     String move = player2Ois.readUTF();
                     int row = Integer.parseInt(String.valueOf(move.charAt(0)));
                     int col = Integer.parseInt(String.valueOf(move.charAt(1)));
+
+
+                    player1Oos.writeUTF(move);
+                    player1Oos.flush();
 
                     table[row][col] = 'X';
                     printTable(table);
@@ -420,7 +430,6 @@ public class Room extends Thread {
                         looser = player1Data.getUser();
                         break;
                     }
-
 
                 }
 
@@ -958,12 +967,9 @@ public class Room extends Thread {
                         command = ois.readUTF();
                     }
 
-
                     if (command != null && command.equals("quit")) {
                         synchronized (watchers) {
                             watchers.remove(userAndHandler);
-
-
                         }
                         synchronized (streamHandlers){
                             streamHandlers.remove(this) ;

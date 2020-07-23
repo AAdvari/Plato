@@ -7,7 +7,7 @@ public class BooleanWrapper {
         this.bool = bool;
     }
 
-    public void setBoolean(boolean bool) {
+    public synchronized void setBoolean(boolean bool) {
         this.bool = bool;
     }
 }
