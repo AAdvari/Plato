@@ -8,6 +8,10 @@ public class Message implements Serializable {
     private Date date;
 
 
+    public Date getDate() {
+        return date;
+    }
+
     public Message(Date date) {
         this.date = date;
 

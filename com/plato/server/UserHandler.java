@@ -185,17 +185,19 @@ public class UserHandler implements Runnable {
                         String messageContent = ois.readUTF();
 
                         User destUser = users.get(destUsername);
-                        if (currentUser.getConversation(destUser) == null) {
+
+                        if (currentUser.getConversations().get(destUser) == null) {
                             Conversation conversation = new Conversation() ;
                             currentUser.addConversation(destUser , conversation);
                             destUser.addConversation(currentUser , conversation);
                         }
-                        Conversation conversation = currentUser.getConversation(destUser);
+
+                        Conversation conversation = currentUser.getConversations().get(destUser);
                         conversation.sendMessage(new TextMessage(new Date(), currentUser, messageContent));
 
 
-                        System.out.println(users.get(destUsername).getConversation(currentUser).getMessages());
-                        System.out.println(currentUser.getConversation(destUser).getMessages());
+                        System.out.println(users.get(destUsername).getConversations().get(destUser).getMessages());
+                        System.out.println(currentUser.getConversations().get(destUser).getMessages());
                         System.out.println(conversation.getMessages());
                         break;
                     }
