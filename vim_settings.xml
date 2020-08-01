@@ -7,7 +7,12 @@
   </component>
   <component name="VimMarksSettings">
     <globalmarks />
-    <filemarks />
+    <filemarks>
+      <file name="/Dummy.txt" timestamp="1596258983888">
+        <mark key="[" line="0" column="0" />
+      </file>
+      <file name="E:/Android/Projects/flutter_app/lib/main.dart" timestamp="1596260032232" />
+    </filemarks>
     <jumps />
   </component>
   <component name="VimSearchSettings">
