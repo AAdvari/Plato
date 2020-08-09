@@ -14,6 +14,10 @@
           <option name="url" value="https://github.com/londonappbrewery/bmi-calculator-flutter.git" />
           <option name="userName" value="" />
         </UrlAndUserName>
+        <UrlAndUserName>
+          <option name="url" value="https://github.com/londonappbrewery/Clima-Flutter.git" />
+          <option name="userName" value="" />
+        </UrlAndUserName>
       </list>
     </option>
     <option name="cloneParentDir" value="E:\Android\Projects" />
